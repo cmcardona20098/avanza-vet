@@ -1,3 +1,18 @@
+// ─── Clínicas registradas en el sistema ──────────────────────────────────────
+export const defaultClinics = [
+  {
+    id: 'avanza',
+    name: 'Avanza',
+    fullName: 'Clínica Veterinaria Avanza',
+    email: 'info@avanza.com',
+    phone: '',
+    address: 'Guatemala',
+    status: 'active',
+    createdAt: '2025-01-01',
+    color: 'bg-blue-600',
+  },
+]
+
 // ─── Inventario por defecto — vacío, se carga desde Excel ────────────────────
 export const defaultInventory = []
 
@@ -12,10 +27,12 @@ export const defaultCatalog = {
 }
 
 // ─── Usuarios del sistema ─────────────────────────────────────────────────────
+// clinicId: null → superadmin global (Core)
+// clinicId: 'avanza' → pertenece a la veterinaria Avanza
 export const defaultUsers = [
-  { id: 'u1', username: 'Core',     password: 'Amelia20098*!_', role: 'core',    name: 'Administración' },
-  { id: 'u2', username: 'Macde',    password: 'Macde',          role: 'admin',   name: 'Administración' },
-  { id: 'u3', username: 'Mirka',    password: 'Mirka',          role: 'admin',   name: 'Administración' },
-  { id: 'u4', username: 'vet',      password: 'vet',            role: 'vet',     name: 'Doctora'        },
-  { id: 'u5', username: 'grooming', password: 'grooming',       role: 'groomer', name: 'Groomista'      },
+  { id: 'u1', username: 'Core',                password: 'Amelia20098*!_', role: 'core',    name: 'Administración', clinicId: null      },
+  { id: 'u2', username: 'macde@avanza.com',    password: 'Macde',          role: 'admin',   name: 'Administración', clinicId: 'avanza'  },
+  { id: 'u3', username: 'mirka@avanza.com',    password: 'Mirka',          role: 'admin',   name: 'Administración', clinicId: 'avanza'  },
+  { id: 'u4', username: 'vet@avanza.com',      password: 'vet',            role: 'vet',     name: 'Doctora',        clinicId: 'avanza'  },
+  { id: 'u5', username: 'grooming@avanza.com', password: 'grooming',       role: 'groomer', name: 'Groomista',      clinicId: 'avanza'  },
 ]

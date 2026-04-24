@@ -4,12 +4,12 @@ import Layout from './components/layout/Layout'
 import Login from './pages/auth/Login'
 
 // Páginas compartidas
-import Pets           from './pages/Pets'
-import PetProfile     from './pages/PetProfile'
-import MedicalHistory from './pages/MedicalHistory'
-import Vaccines       from './pages/Vaccines'
-import Appointments   from './pages/Appointments'
-import Owners         from './pages/Owners'
+import Pets             from './pages/Pets'
+import PetProfile       from './pages/PetProfile'
+import MedicalHistory   from './pages/MedicalHistory'
+import Vaccines         from './pages/Vaccines'
+import Appointments     from './pages/Appointments'
+import Owners           from './pages/Owners'
 import WhatsAppFollowUp from './pages/WhatsAppFollowUp'
 
 // Admin
@@ -30,11 +30,15 @@ import GroomerDashboard   from './pages/groomer/GroomerDashboard'
 import GroomerAgenda      from './pages/groomer/GroomerAgenda'
 import NewGroomingService from './pages/groomer/NewGroomingService'
 
+// Core (superadmin global)
+import CoreDashboard from './pages/core/CoreDashboard'
+
 function DashboardRouter() {
-  const { role } = useApp()
-  if (role === 'vet')     return <VetDashboard />
-  if (role === 'groomer') return <GroomerDashboard />
-  return <AdminDashboard />   // admin y core ven el mismo dashboard
+  const { role, activeClinicId } = useApp()
+  if (role === 'vet')                       return <VetDashboard />
+  if (role === 'groomer')                   return <GroomerDashboard />
+  if (role === 'core' && !activeClinicId)   return <CoreDashboard />
+  return <AdminDashboard />  // admin, y Core cuando está viendo una clínica
 }
 
 function AgendaRouter() {

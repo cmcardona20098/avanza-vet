@@ -81,7 +81,9 @@ export default function UserAdmin() {
                     {isMe && <Badge variant="blue">Tú</Badge>}
                     {isCore && <Badge variant="red">Core</Badge>}
                   </div>
-                  <p className="text-sm text-gray-500">@{user.username}</p>
+                  <p className="text-sm text-gray-500">
+                    {user.username.includes('@') ? user.username : `@${user.username}`}
+                  </p>
                   <Badge variant={roleVariant[user.role] || 'gray'} className="mt-1">
                     {roleLabels[user.role] || user.role}
                   </Badge>

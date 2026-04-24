@@ -4,7 +4,7 @@ import {
   CalendarDays, PawPrint, Users, Inbox, DollarSign,
   Stethoscope, Scissors, CheckCircle, Eye, EyeOff, UserCog,
   AlertTriangle, Package, ChevronDown, ChevronUp, Clock,
-  Banknote, CreditCard, ArrowLeftRight
+  Banknote, CreditCard, ArrowLeftRight, ShieldCheck, ArrowLeft, Building2
 } from 'lucide-react'
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from 'recharts'
 import { useApp } from '../../context/AppContext'
@@ -65,7 +65,7 @@ function ApptIndicator({ label, pending, completed, color }) {
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
-  const { appointments, inbox, pendingCount, pets, owners, users, inventory } = useApp()
+  const { appointments, inbox, pendingCount, pets, owners, users, inventory, role, activeClinicId, currentClinic, setActiveClinic } = useApp()
   const [showIncome, setShowIncome]             = useState(false)
   const [showIncomeDetail, setShowIncomeDetail] = useState(false)
 
@@ -116,8 +116,29 @@ export default function AdminDashboard() {
   const lowStockItems = (inventory || []).filter(i => i.quantity > 0 && i.quantity <= i.minStock)
   const outOfStock    = (inventory || []).filter(i => i.quantity <= 0)
 
+  const isCore = role === 'core'
+
   return (
     <div className="space-y-6 max-w-7xl mx-auto">
+
+      {/* Banner Core viendo clínica */}
+      {isCore && activeClinicId && currentClinic && (
+        <div className="bg-rose-50 border border-rose-200 rounded-xl px-4 py-3 flex items-center gap-3">
+          <div className="flex items-center gap-2 flex-1">
+            <ShieldCheck size={18} className="text-rose-600 shrink-0" />
+            <Building2 size={15} className="text-rose-500 shrink-0" />
+            <p className="text-sm text-rose-800">
+              Viendo operación de: <strong>{currentClinic.name}</strong>
+            </p>
+          </div>
+          <button
+            onClick={() => { setActiveClinic(null); navigate('/') }}
+            className="flex items-center gap-1.5 text-xs font-semibold text-rose-700 hover:bg-rose-100 px-3 py-1.5 rounded-lg transition-colors shrink-0"
+          >
+            <ArrowLeft size={13} /> Panel global
+          </button>
+        </div>
+      )}
 
       {/* Accesos rápidos */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">

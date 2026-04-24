@@ -35,7 +35,7 @@ export default function Login() {
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg shadow-blue-500/30">
             <Stethoscope size={32} className="text-white" />
           </div>
-          <h1 className="text-3xl font-bold text-white">Avanza Vet</h1>
+          <h1 className="text-3xl font-bold text-white">Vet Flow IT</h1>
           <p className="text-blue-300 text-sm mt-1">Sistema de gestión veterinaria</p>
         </div>
 
@@ -99,7 +99,7 @@ export default function Login() {
           </form>
         </div>
 
-        <p className="text-white/20 text-xs text-center mt-6">© 2025 Avanza Vet · Todos los derechos reservados</p>
+        <p className="text-white/20 text-xs text-center mt-6">© 2025 Vet Flow IT · Todos los derechos reservados</p>
       </div>
     </div>
   )

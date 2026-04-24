@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { defaultCatalog, defaultUsers, defaultInventory } from '../data/mockData'
+import { defaultCatalog, defaultUsers, defaultInventory, defaultClinics } from '../data/mockData'
 
 const AppContext = createContext(null)
 
-const LS_KEY = 'vetcare_v4'
+const LS_KEY = 'vetcare_v5'
 
 function loadState() {
   try {
@@ -30,6 +30,8 @@ function getInitial() {
     groomingSessions:saved?.groomingSessions?? [],
     followUpSuggestions: saved?.followUpSuggestions ?? [],
     inventory:           saved?.inventory           ?? defaultInventory,
+    clinics:             saved?.clinics             ?? defaultClinics,
+    activeClinicId:      saved?.activeClinicId      ?? null,
   }
 }
 
@@ -344,17 +346,30 @@ export function AppProvider({ children }) {
     update({
       pets: [], owners: [], appointments: [], medicalRecords: [],
       vaccineRecords: [], dewormingRecords: [], inbox: [],
-      groomingSessions: [], followUpSuggestions: [],
+      groomingSessions: [], followUpSuggestions: [], activeClinicId: null,
     })
   }
 
-  const pendingCount = state.inbox.filter(i => i.status === 'pending').length
-  const role   = state.currentUser?.role || 'admin'
-  const isCore = role === 'core'
+  // ─── Clinics ─────────────────────────────────────────
+  function addClinic(clinic) {
+    update({ clinics: [...state.clinics, { ...clinic, id: clinic.id || `clinic${Date.now()}`, status: 'active', createdAt: new Date().toISOString().split('T')[0] }] })
+  }
+  function updateClinic(id, data) {
+    update({ clinics: state.clinics.map(c => c.id === id ? { ...c, ...data } : c) })
+  }
+  function setActiveClinic(clinicId) {
+    update({ activeClinicId: clinicId })
+  }
+
+  const pendingCount    = state.inbox.filter(i => i.status === 'pending').length
+  const role            = state.currentUser?.role || 'admin'
+  const isCore          = role === 'core'
+  const activeClinicId  = state.activeClinicId
+  const currentClinic   = state.clinics.find(c => c.id === (state.currentUser?.clinicId || state.activeClinicId)) || null
 
   return (
     <AppContext.Provider value={{
-      ...state, role, isCore, pendingCount,
+      ...state, role, isCore, pendingCount, activeClinicId, currentClinic,
       login, logout,
       addUser, updateUser, deleteUser,
       updateCatalog, updateConsultationFee,
@@ -366,6 +381,7 @@ export function AppProvider({ children }) {
       startGroomingSession, stopGroomingSession,
       addFollowUpSuggestion, markFollowUpSent, updateFollowUpMessage,
       addInventoryItem, updateInventoryItem, deleteInventoryItem, adjustInventoryQuantity, importInventory,
+      addClinic, updateClinic, setActiveClinic,
       clearAllData,
     }}>
       {children}
