@@ -3,14 +3,15 @@ import { useApp } from '../context/AppContext'
 import clsx from 'clsx'
 
 const roles = [
-  { key: 'admin',   label: 'Administración', icon: ShieldCheck, color: 'bg-blue-600'   },
-  { key: 'vet',     label: 'Doctora',         icon: Stethoscope, color: 'bg-emerald-600' },
-  { key: 'groomer', label: 'Groomista',       icon: Scissors,    color: 'bg-violet-600'  },
+  { key: 'core',    label: 'Core',           icon: ShieldCheck, color: 'bg-rose-600'    },
+  { key: 'admin',   label: 'Administración', icon: ShieldCheck, color: 'bg-blue-600'    },
+  { key: 'vet',     label: 'Doctora',        icon: Stethoscope, color: 'bg-emerald-600' },
+  { key: 'groomer', label: 'Groomista',      icon: Scissors,    color: 'bg-violet-600'  },
 ]
 
 export function RoleBadge() {
   const { role } = useApp()
-  const r = roles.find(r => r.key === role)
+  const r    = roles.find(r => r.key === role) || roles[1] // fallback a admin
   const Icon = r.icon
   return (
     <span className={clsx('inline-flex items-center gap-1.5 text-xs font-semibold text-white px-2.5 py-1 rounded-full', r.color)}>

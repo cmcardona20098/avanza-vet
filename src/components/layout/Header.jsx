@@ -6,15 +6,27 @@ import { RoleBadge } from '../RoleSwitcher'
 import clsx from 'clsx'
 
 const roleAccent = {
+  core:    'bg-rose-600',
   admin:   'bg-blue-600',
   vet:     'bg-emerald-600',
   groomer: 'bg-violet-600',
+}
+
+const roleInitial = {
+  core:    'C',
+  admin:   'A',
+  vet:     'V',
+  groomer: 'G',
 }
 
 export default function Header({ onMenuClick, title }) {
   const [searchOpen, setSearchOpen] = useState(false)
   const { role, pendingCount } = useApp()
   const navigate = useNavigate()
+
+  const accentColor = roleAccent[role] || 'bg-blue-600'
+  const initial     = roleInitial[role] || 'A'
+  const showBell    = role === 'admin' || role === 'core'
 
   return (
     <header className="h-16 bg-white border-b border-gray-100 flex items-center px-4 gap-4 sticky top-0 z-10">
@@ -44,7 +56,7 @@ export default function Header({ onMenuClick, title }) {
           <Search size={18} />
         </button>
 
-        {role === 'admin' && (
+        {showBell && (
           <button
             onClick={() => navigate('/bandeja')}
             className="relative p-2 rounded-lg text-gray-500 hover:bg-gray-100 transition-colors"
@@ -58,8 +70,8 @@ export default function Header({ onMenuClick, title }) {
           </button>
         )}
 
-        <div className={clsx('w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ml-1', roleAccent[role])}>
-          {role === 'admin' ? 'A' : role === 'vet' ? 'V' : 'G'}
+        <div className={clsx('w-8 h-8 rounded-full flex items-center justify-center text-white text-xs font-bold ml-1', accentColor)}>
+          {initial}
         </div>
       </div>
     </header>

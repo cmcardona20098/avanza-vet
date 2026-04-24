@@ -26,7 +26,9 @@ export default function Layout({ children }) {
 
   const basePath = '/' + location.pathname.split('/')[1]
   const titles = pageTitles[basePath] || {}
-  const title = titles[role] || titles['admin'] || 'VetCare Pro'
+  // core ve los mismos títulos que admin
+  const effectiveRole = role === 'core' ? 'admin' : role
+  const title = titles[effectiveRole] || titles['admin'] || 'Avanza Vet'
 
   return (
     <div className="flex h-screen bg-gray-50 overflow-hidden">
