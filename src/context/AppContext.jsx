@@ -401,6 +401,23 @@ export function AppProvider({ children }) {
       )
     })
   }
+  function deleteClinic(clinicId) {
+    update({
+      clinics:             state.clinics.filter(c => c.id !== clinicId),
+      users:               state.users.filter(u => u.clinicId !== clinicId),
+      pets:                state.pets.filter(p => p.clinicId !== clinicId),
+      owners:              state.owners.filter(o => o.clinicId !== clinicId),
+      appointments:        state.appointments.filter(a => a.clinicId !== clinicId),
+      inbox:               state.inbox.filter(i => i.clinicId !== clinicId),
+      medicalRecords:      state.medicalRecords.filter(r => r.clinicId !== clinicId),
+      vaccineRecords:      state.vaccineRecords.filter(r => r.clinicId !== clinicId),
+      dewormingRecords:    state.dewormingRecords.filter(r => r.clinicId !== clinicId),
+      groomingSessions:    state.groomingSessions.filter(s => s.clinicId !== clinicId),
+      followUpSuggestions: state.followUpSuggestions.filter(f => f.clinicId !== clinicId),
+      inventory:           state.inventory.filter(i => i.clinicId !== clinicId),
+      activeClinicId:      state.activeClinicId === clinicId ? null : state.activeClinicId,
+    })
+  }
   function setActiveClinic(clinicId) {
     update({ activeClinicId: clinicId })
   }
@@ -458,7 +475,7 @@ export function AppProvider({ children }) {
       startGroomingSession, stopGroomingSession,
       addFollowUpSuggestion, markFollowUpSent, updateFollowUpMessage,
       addInventoryItem, updateInventoryItem, deleteInventoryItem, adjustInventoryQuantity, importInventory,
-      addClinic, updateClinic, toggleClinicStatus, setActiveClinic,
+      addClinic, updateClinic, toggleClinicStatus, deleteClinic, setActiveClinic,
       clearAllData,
     }}>
       {children}

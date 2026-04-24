@@ -3,7 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import {
   ShieldCheck, Building2, Users, ArrowRight, Plus, CheckCircle, Clock,
   Pencil, X, Phone, Mail, MapPin, User, FileText, ToggleLeft, ToggleRight,
-  Stethoscope, Scissors, Shield, AlertTriangle
+  Stethoscope, Scissors, Shield, AlertTriangle, Trash2
 } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Card, { CardHeader } from '../../components/ui/Card'
@@ -111,7 +111,7 @@ function ClinicForm({ initial = {}, onSubmit, onCancel, isEdit }) {
 }
 
 // ── Tarjeta de veterinaria ────────────────────────────────────────────────────
-function ClinicCard({ clinic, users, onEnter, onEdit, onToggle }) {
+function ClinicCard({ clinic, users, onEnter, onEdit, onToggle, onDelete }) {
   const cu       = clinicUsers(users, clinic.id)
   const admins   = cu.filter(u => u.role === 'admin').length
   const vets     = cu.filter(u => u.role === 'vet').length
@@ -204,12 +204,19 @@ function ClinicCard({ clinic, users, onEnter, onEdit, onToggle }) {
               onClick={() => onToggle(clinic.id)}
               className={`flex-1 flex items-center justify-center gap-1.5 text-xs font-semibold py-2 rounded-lg transition-colors border ${
                 isActive
-                  ? 'text-red-600 hover:bg-red-50 border-red-200'
+                  ? 'text-amber-600 hover:bg-amber-50 border-amber-200'
                   : 'text-emerald-600 hover:bg-emerald-50 border-emerald-200'
               }`}
             >
               {isActive ? <ToggleLeft size={13} /> : <ToggleRight size={13} />}
               {isActive ? 'Desactivar' : 'Activar'}
+            </button>
+            <button
+              onClick={() => onDelete(clinic)}
+              className="flex items-center justify-center gap-1.5 text-xs font-semibold text-red-600 hover:bg-red-50 py-2 px-3 rounded-lg transition-colors border border-red-200"
+              title="Eliminar veterinaria"
+            >
+              <Trash2 size={13} />
             </button>
           </div>
         </div>
@@ -231,11 +238,12 @@ function ClinicCard({ clinic, users, onEnter, onEdit, onToggle }) {
 // ── Dashboard Core ────────────────────────────────────────────────────────────
 export default function CoreDashboard() {
   const navigate = useNavigate()
-  const { clinics, users, addClinic, updateClinic, toggleClinicStatus, setActiveClinic } = useApp()
+  const { clinics, users, addClinic, updateClinic, toggleClinicStatus, deleteClinic, setActiveClinic } = useApp()
 
-  const [showNewModal,  setShowNewModal]  = useState(false)
-  const [editingClinic, setEditingClinic] = useState(null)
-  const [inactiveAlert, setInactiveAlert] = useState('')
+  const [showNewModal,    setShowNewModal]    = useState(false)
+  const [editingClinic,   setEditingClinic]   = useState(null)
+  const [deletingClinic,  setDeletingClinic]  = useState(null)
+  const [inactiveAlert,   setInactiveAlert]   = useState('')
 
   const nonCoreUsers      = users.filter(u => u.role !== 'core')
   const activeClinicCount = clinics.filter(c => c.status === 'active').length
@@ -248,6 +256,11 @@ export default function CoreDashboard() {
   function handleEdit(data) {
     updateClinic(editingClinic.id, data)
     setEditingClinic(null)
+  }
+
+  function handleDelete() {
+    deleteClinic(deletingClinic.id)
+    setDeletingClinic(null)
   }
 
   function handleEnter(clinic) {
@@ -327,6 +340,7 @@ export default function CoreDashboard() {
               onEnter={handleEnter}
               onEdit={c => setEditingClinic(c)}
               onToggle={toggleClinicStatus}
+              onDelete={c => setDeletingClinic(c)}
             />
           ))}
 
@@ -470,6 +484,60 @@ export default function CoreDashboard() {
             onCancel={() => setEditingClinic(null)}
             isEdit
           />
+        )}
+      </Modal>
+
+      {/* Modal: Confirmar eliminación */}
+      <Modal
+        isOpen={!!deletingClinic}
+        onClose={() => setDeletingClinic(null)}
+        title="Eliminar veterinaria"
+      >
+        {deletingClinic && (
+          <div className="space-y-5">
+            {/* Icono de advertencia */}
+            <div className="flex flex-col items-center text-center gap-3 py-2">
+              <div className="w-14 h-14 bg-red-100 rounded-2xl flex items-center justify-center">
+                <Trash2 size={26} className="text-red-600" />
+              </div>
+              <div>
+                <p className="font-bold text-gray-900 text-lg">{deletingClinic.name}</p>
+                <p className="text-sm text-gray-500 mt-1">
+                  ¿Estás seguro que deseas eliminar esta veterinaria?
+                </p>
+              </div>
+            </div>
+
+            {/* Advertencia de datos */}
+            <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3">
+              <div className="flex items-start gap-2">
+                <AlertTriangle size={16} className="text-red-600 mt-0.5 shrink-0" />
+                <div className="text-sm text-red-800">
+                  <p className="font-semibold mb-1">Esta acción eliminará permanentemente:</p>
+                  <ul className="list-disc list-inside space-y-0.5 text-xs text-red-700">
+                    <li>Todos los usuarios de la clínica</li>
+                    <li>Mascotas, dueños y citas</li>
+                    <li>Historial médico y vacunas</li>
+                    <li>Inventario y facturación</li>
+                    <li>Sesiones de grooming y seguimientos</li>
+                  </ul>
+                  <p className="font-bold mt-2">Esta acción no se puede deshacer.</p>
+                </div>
+              </div>
+            </div>
+
+            <div className="flex gap-3 justify-end">
+              <Button variant="secondary" onClick={() => setDeletingClinic(null)}>
+                Cancelar
+              </Button>
+              <button
+                onClick={handleDelete}
+                className="flex items-center gap-2 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-sm"
+              >
+                <Trash2 size={15} /> Sí, eliminar veterinaria
+              </button>
+            </div>
+          </div>
         )}
       </Modal>
     </div>
