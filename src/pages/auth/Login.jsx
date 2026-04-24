@@ -15,8 +15,12 @@ export default function Login() {
     setError('')
     setLoading(true)
     setTimeout(() => {
-      const ok = login(username.trim(), password)
-      if (!ok) setError('Usuario o contraseña incorrectos')
+      const result = login(username.trim(), password)
+      if (result === 'inactive') {
+        setError('Esta veterinaria se encuentra inactiva. Contacte al administrador Core.')
+      } else if (!result) {
+        setError('Usuario o contraseña incorrectos')
+      }
       setLoading(false)
     }, 600)
   }

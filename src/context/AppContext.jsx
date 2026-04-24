@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { defaultCatalog, defaultUsers, defaultInventory, defaultClinics } from '../data/mockData'
+import { defaultCatalog, defaultUsers, defaultInventory, defaultClinics, domainFromName, CLINIC_COLORS } from '../data/mockData'
 
 const AppContext = createContext(null)
 
-const LS_KEY = 'vetcare_v5'
+const LS_KEY = 'vetcare_v6'
 
 function loadState() {
   try {
@@ -44,10 +44,20 @@ export function AppProvider({ children }) {
 
   const update = useCallback((patch) => setState(s => ({ ...s, ...patch })), [])
 
+  // ─── Effective clinic for the current session ─────────
+  const _currentRole        = state.currentUser?.role || 'admin'
+  const _isCore             = _currentRole === 'core'
+  const effectiveClinicId   = _isCore ? state.activeClinicId : (state.currentUser?.clinicId || null)
+
   // ─── Auth ────────────────────────────────────────────
   function login(username, password) {
     const user = state.users.find(u => u.username === username && u.password === password)
     if (!user) return false
+    // Block login if clinic is inactive (except Core)
+    if (user.role !== 'core' && user.clinicId) {
+      const clinic = state.clinics.find(c => c.id === user.clinicId)
+      if (clinic && clinic.status !== 'active') return 'inactive'
+    }
     update({ isLoggedIn: true, currentUser: user })
     return true
   }
@@ -74,7 +84,7 @@ export function AppProvider({ children }) {
 
   // ─── Owners ──────────────────────────────────────────
   function addOwner(owner) {
-    const newOwner = { ...owner, id: `o${Date.now()}`, createdAt: new Date().toISOString().split('T')[0] }
+    const newOwner = { ...owner, id: `o${Date.now()}`, clinicId: effectiveClinicId || owner.clinicId || null, createdAt: new Date().toISOString().split('T')[0] }
     update({ owners: [...state.owners, newOwner] })
     return newOwner
   }
@@ -87,7 +97,7 @@ export function AppProvider({ children }) {
 
   // ─── Pets ────────────────────────────────────────────
   function addPet(pet) {
-    const newPet = { ...pet, id: `p${Date.now()}`, createdAt: new Date().toISOString().split('T')[0], status: 'active' }
+    const newPet = { ...pet, id: `p${Date.now()}`, clinicId: effectiveClinicId || pet.clinicId || null, createdAt: new Date().toISOString().split('T')[0], status: 'active' }
     update({ pets: [...state.pets, newPet] })
     return newPet
   }
@@ -100,7 +110,7 @@ export function AppProvider({ children }) {
 
   // ─── Appointments ────────────────────────────────────
   function addAppointment(appt) {
-    const newAppt = { ...appt, id: `a${Date.now()}`, status: 'confirmed' }
+    const newAppt = { ...appt, id: `a${Date.now()}`, clinicId: effectiveClinicId || appt.clinicId || null, status: 'confirmed' }
     update({ appointments: [...state.appointments, newAppt] })
     return newAppt
   }
@@ -351,25 +361,92 @@ export function AppProvider({ children }) {
   }
 
   // ─── Clinics ─────────────────────────────────────────
-  function addClinic(clinic) {
-    update({ clinics: [...state.clinics, { ...clinic, id: clinic.id || `clinic${Date.now()}`, status: 'active', createdAt: new Date().toISOString().split('T')[0] }] })
+  function addClinic(clinicData) {
+    const id     = `clinic_${Date.now()}`
+    const domain = domainFromName(clinicData.name)
+    const color  = CLINIC_COLORS[state.clinics.length % CLINIC_COLORS.length]
+
+    const newClinic = {
+      id,
+      name:        clinicData.name        || '',
+      fullName:    clinicData.fullName    || clinicData.name || '',
+      email:       clinicData.email       || '',
+      phone:       clinicData.phone       || '',
+      address:     clinicData.address     || '',
+      contactName: clinicData.contactName || '',
+      observations:clinicData.observations|| '',
+      status:      clinicData.status      || 'active',
+      createdAt:   new Date().toISOString().split('T')[0],
+      color,
+    }
+
+    // Auto-generate 4 base users
+    const baseUsers = [
+      { id: `u_${id}_a1`, username: `admin1@${domain}.com`, password: 'admin1',   role: 'admin',   name: 'Administración', clinicId: id },
+      { id: `u_${id}_a2`, username: `admin2@${domain}.com`, password: 'admin2',   role: 'admin',   name: 'Administración', clinicId: id },
+      { id: `u_${id}_v`,  username: `vet@${domain}.com`,    password: 'vet',      role: 'vet',     name: 'Doctora',        clinicId: id },
+      { id: `u_${id}_g`,  username: `grooming@${domain}.com`,password:'grooming', role: 'groomer', name: 'Groomista',      clinicId: id },
+    ]
+
+    update({ clinics: [...state.clinics, newClinic], users: [...state.users, ...baseUsers] })
+    return newClinic
   }
   function updateClinic(id, data) {
     update({ clinics: state.clinics.map(c => c.id === id ? { ...c, ...data } : c) })
+  }
+  function toggleClinicStatus(clinicId) {
+    update({
+      clinics: state.clinics.map(c =>
+        c.id === clinicId ? { ...c, status: c.status === 'active' ? 'inactive' : 'active' } : c
+      )
+    })
   }
   function setActiveClinic(clinicId) {
     update({ activeClinicId: clinicId })
   }
 
-  const pendingCount    = state.inbox.filter(i => i.status === 'pending').length
-  const role            = state.currentUser?.role || 'admin'
-  const isCore          = role === 'core'
-  const activeClinicId  = state.activeClinicId
-  const currentClinic   = state.clinics.find(c => c.id === (state.currentUser?.clinicId || state.activeClinicId)) || null
+  // ─── Multi-tenant data filtering ─────────────────────
+  // Each clinic sees only its own records. Core sees clinic data when inside one.
+  const _filter = (arr) =>
+    effectiveClinicId
+      ? arr.filter(r => !r.clinicId || r.clinicId === effectiveClinicId)
+      : arr
+
+  const filteredPets             = _filter(state.pets)
+  const filteredOwners           = _filter(state.owners)
+  const filteredAppointments     = _filter(state.appointments)
+  const filteredInbox            = _filter(state.inbox)
+  const filteredMedicalRecords   = _filter(state.medicalRecords)
+  const filteredVaccineRecords   = _filter(state.vaccineRecords)
+  const filteredDewormingRecords = _filter(state.dewormingRecords)
+  const filteredGroomingSessions = _filter(state.groomingSessions)
+  const filteredFollowUp         = _filter(state.followUpSuggestions)
+  const filteredInventory        = effectiveClinicId
+    ? state.inventory.filter(i => !i.clinicId || i.clinicId === effectiveClinicId)
+    : state.inventory
+
+  const pendingCount   = filteredInbox.filter(i => i.status === 'pending').length
+  const role           = _currentRole
+  const isCore         = _isCore
+  const activeClinicId = state.activeClinicId
+  const currentClinic  = state.clinics.find(c => c.id === (state.currentUser?.clinicId || state.activeClinicId)) || null
 
   return (
     <AppContext.Provider value={{
-      ...state, role, isCore, pendingCount, activeClinicId, currentClinic,
+      ...state,
+      // Filtered / computed overrides
+      pets:               filteredPets,
+      owners:             filteredOwners,
+      appointments:       filteredAppointments,
+      inbox:              filteredInbox,
+      medicalRecords:     filteredMedicalRecords,
+      vaccineRecords:     filteredVaccineRecords,
+      dewormingRecords:   filteredDewormingRecords,
+      groomingSessions:   filteredGroomingSessions,
+      followUpSuggestions:filteredFollowUp,
+      inventory:          filteredInventory,
+      // Meta
+      role, isCore, pendingCount, activeClinicId, currentClinic, effectiveClinicId,
       login, logout,
       addUser, updateUser, deleteUser,
       updateCatalog, updateConsultationFee,
@@ -381,7 +458,7 @@ export function AppProvider({ children }) {
       startGroomingSession, stopGroomingSession,
       addFollowUpSuggestion, markFollowUpSent, updateFollowUpMessage,
       addInventoryItem, updateInventoryItem, deleteInventoryItem, adjustInventoryQuantity, importInventory,
-      addClinic, updateClinic, setActiveClinic,
+      addClinic, updateClinic, toggleClinicStatus, setActiveClinic,
       clearAllData,
     }}>
       {children}
