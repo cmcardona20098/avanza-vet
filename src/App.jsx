@@ -34,7 +34,7 @@ function DashboardRouter() {
   const { role } = useApp()
   if (role === 'vet')     return <VetDashboard />
   if (role === 'groomer') return <GroomerDashboard />
-  return <AdminDashboard />
+  return <AdminDashboard />   // admin y core ven el mismo dashboard
 }
 
 function AgendaRouter() {

@@ -1,25 +1,41 @@
 import { NavLink } from 'react-router-dom'
 import {
   LayoutDashboard, PawPrint, ClipboardList, Syringe, CalendarDays,
-  Users, MessageCircle, ChevronRight, Stethoscope, Scissors,
-  Inbox, FilePlus, Calendar, Tag, LogOut, UserCog, Package
+  Users, MessageCircle, Stethoscope, Scissors,
+  Inbox, FilePlus, Calendar, Tag, LogOut, UserCog, Package, ShieldCheck
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '../../context/AppContext'
 
+// Core: acceso total incluyendo gestión de usuarios
+const coreNav = [
+  { to: '/',            icon: LayoutDashboard, label: 'Dashboard'        },
+  { to: '/agenda',      icon: CalendarDays,    label: 'Agenda General'   },
+  { to: '/bandeja',     icon: Inbox,           label: 'Bandeja', badge: 'inbox' },
+  { to: '/precios',     icon: Tag,             label: 'Precios'          },
+  { to: '/usuarios',    icon: UserCog,         label: 'Usuarios'         },
+  { to: '/mascotas',    icon: PawPrint,        label: 'Mascotas'         },
+  { to: '/historial',   icon: ClipboardList,   label: 'Historial Médico' },
+  { to: '/vacunas',     icon: Syringe,         label: 'Vacunas'          },
+  { to: '/citas',       icon: CalendarDays,    label: 'Citas'            },
+  { to: '/duenos',      icon: Users,           label: 'Dueños'           },
+  { to: '/inventario',  icon: Package,         label: 'Inventario'       },
+  { to: '/seguimiento', icon: MessageCircle,   label: 'Seguimiento IA'   },
+]
+
+// Admin: igual que core pero SIN gestión de usuarios
 const adminNav = [
-  { to: '/',            icon: LayoutDashboard, label: 'Dashboard'         },
-  { to: '/agenda',      icon: CalendarDays,    label: 'Agenda General'    },
-  { to: '/bandeja',     icon: Inbox,           label: 'Bandeja',   badge: 'inbox' },
-  { to: '/precios',     icon: Tag,             label: 'Precios'           },
-  { to: '/usuarios',    icon: UserCog,         label: 'Usuarios'          },
-  { to: '/mascotas',    icon: PawPrint,        label: 'Mascotas'          },
-  { to: '/historial',   icon: ClipboardList,   label: 'Historial Médico'  },
-  { to: '/vacunas',     icon: Syringe,         label: 'Vacunas'           },
-  { to: '/citas',       icon: CalendarDays,    label: 'Citas'             },
-  { to: '/duenos',      icon: Users,           label: 'Dueños'            },
-  { to: '/inventario',  icon: Package,         label: 'Inventario'        },
-  { to: '/seguimiento', icon: MessageCircle,   label: 'Seguimiento IA'    },
+  { to: '/',            icon: LayoutDashboard, label: 'Dashboard'        },
+  { to: '/agenda',      icon: CalendarDays,    label: 'Agenda General'   },
+  { to: '/bandeja',     icon: Inbox,           label: 'Bandeja', badge: 'inbox' },
+  { to: '/precios',     icon: Tag,             label: 'Precios'          },
+  { to: '/mascotas',    icon: PawPrint,        label: 'Mascotas'         },
+  { to: '/historial',   icon: ClipboardList,   label: 'Historial Médico' },
+  { to: '/vacunas',     icon: Syringe,         label: 'Vacunas'          },
+  { to: '/citas',       icon: CalendarDays,    label: 'Citas'            },
+  { to: '/duenos',      icon: Users,           label: 'Dueños'           },
+  { to: '/inventario',  icon: Package,         label: 'Inventario'       },
+  { to: '/seguimiento', icon: MessageCircle,   label: 'Seguimiento IA'   },
 ]
 
 const vetNav = [
@@ -32,21 +48,27 @@ const vetNav = [
 ]
 
 const groomerNav = [
-  { to: '/',           icon: LayoutDashboard, label: 'Mi Dashboard' },
-  { to: '/mi-agenda',  icon: Calendar,        label: 'Mi Agenda'   },
-  { to: '/mascotas',   icon: PawPrint,        label: 'Mascotas'    },
+  { to: '/',          icon: LayoutDashboard, label: 'Mi Dashboard' },
+  { to: '/mi-agenda', icon: Calendar,        label: 'Mi Agenda'    },
+  { to: '/mascotas',  icon: PawPrint,        label: 'Mascotas'     },
 ]
 
 const roleColors = {
-  admin:   { accent: 'bg-blue-600',    light: 'bg-blue-50 text-blue-700',      name: 'Administración' },
-  vet:     { accent: 'bg-emerald-600', light: 'bg-emerald-50 text-emerald-700', name: 'Doctora Vet.'   },
-  groomer: { accent: 'bg-violet-600',  light: 'bg-violet-50 text-violet-700',   name: 'Groomista'      },
+  core:    { accent: 'bg-rose-600',    light: 'bg-rose-50 text-rose-700',       name: 'Core'          },
+  admin:   { accent: 'bg-blue-600',    light: 'bg-blue-50 text-blue-700',       name: 'Administración'},
+  vet:     { accent: 'bg-emerald-600', light: 'bg-emerald-50 text-emerald-700', name: 'Doctora Vet.'  },
+  groomer: { accent: 'bg-violet-600',  light: 'bg-violet-50 text-violet-700',   name: 'Groomista'     },
 }
 
 export default function Sidebar({ isOpen, onClose }) {
   const { role, pendingCount, currentUser, logout } = useApp()
-  const nav = role === 'admin' ? adminNav : role === 'vet' ? vetNav : groomerNav
-  const rc  = roleColors[role]
+
+  const nav = role === 'core'    ? coreNav
+            : role === 'admin'   ? adminNav
+            : role === 'vet'     ? vetNav
+            : groomerNav
+
+  const rc = roleColors[role] || roleColors.admin
 
   return (
     <>
@@ -65,7 +87,10 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
             <div>
               <p className="font-bold text-gray-900 leading-tight text-sm">Avanza Vet</p>
-              <span className={clsx('text-xs font-semibold px-1.5 py-0.5 rounded-full', rc.light)}>{rc.name}</span>
+              <div className="flex items-center gap-1">
+                {role === 'core' && <ShieldCheck size={10} className="text-rose-500" />}
+                <span className={clsx('text-xs font-semibold px-1.5 py-0.5 rounded-full', rc.light)}>{rc.name}</span>
+              </div>
             </div>
           </div>
         </div>
@@ -99,7 +124,7 @@ export default function Sidebar({ isOpen, onClose }) {
           </ul>
         </nav>
 
-        {/* Footer con logout */}
+        {/* Footer */}
         <div className="px-4 py-3 border-t border-gray-100 space-y-1">
           <div className="flex items-center gap-3 px-2 py-1.5 rounded-lg">
             <div className={clsx('w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white', rc.accent)}>
@@ -107,7 +132,7 @@ export default function Sidebar({ isOpen, onClose }) {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-medium text-gray-900 truncate">{currentUser?.name || 'Usuario'}</p>
-              <p className="text-xs text-gray-500">Avanza Vet</p>
+              <p className="text-xs text-gray-500">@{currentUser?.username}</p>
             </div>
           </div>
           <button

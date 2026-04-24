@@ -3,7 +3,7 @@ import { defaultCatalog, defaultUsers, defaultInventory } from '../data/mockData
 
 const AppContext = createContext(null)
 
-const LS_KEY = 'vetcare_v3'
+const LS_KEY = 'vetcare_v4'
 
 function loadState() {
   try {
@@ -349,11 +349,12 @@ export function AppProvider({ children }) {
   }
 
   const pendingCount = state.inbox.filter(i => i.status === 'pending').length
-  const role = state.currentUser?.role || 'admin'
+  const role   = state.currentUser?.role || 'admin'
+  const isCore = role === 'core'
 
   return (
     <AppContext.Provider value={{
-      ...state, role, pendingCount,
+      ...state, role, isCore, pendingCount,
       login, logout,
       addUser, updateUser, deleteUser,
       updateCatalog, updateConsultationFee,
