@@ -3,7 +3,7 @@ import { defaultCatalog, defaultUsers, defaultInventory } from '../data/mockData
 
 const AppContext = createContext(null)
 
-const LS_KEY = 'vetcare_v2'
+const LS_KEY = 'vetcare_v3'
 
 function loadState() {
   try {

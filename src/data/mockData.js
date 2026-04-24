@@ -13,7 +13,9 @@ export const defaultCatalog = {
 
 // ─── Usuarios del sistema ─────────────────────────────────────────────────────
 export const defaultUsers = [
-  { id: 'u1', username: 'admin',    password: 'admin',    role: 'admin',   name: 'Administración'     },
-  { id: 'u2', username: 'vet',      password: 'vet',      role: 'vet',     name: 'Dra. Sofía Ramírez' },
-  { id: 'u3', username: 'grooming', password: 'grooming', role: 'groomer', name: 'Mario López'        },
+  { id: 'u1', username: 'Admin',    password: 'Amelia20098*!_', role: 'admin',   name: 'Administración' },
+  { id: 'u2', username: 'vet',      password: 'vet',            role: 'vet',     name: 'Doctora'        },
+  { id: 'u3', username: 'grooming', password: 'grooming',       role: 'groomer', name: 'Groomista'      },
+  { id: 'u4', username: 'Macde',    password: 'Macde',          role: 'admin',   name: 'Administración' },
+  { id: 'u5', username: 'Mirka',    password: 'Mirka',          role: 'admin',   name: 'Administración' },
 ]
