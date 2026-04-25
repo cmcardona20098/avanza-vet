@@ -149,24 +149,32 @@ export default function Sidebar({ isOpen, onClose }) {
         )}
 
         {/* Nav */}
-        <nav className="flex-1 px-3 py-3 overflow-y-auto">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider px-3 mb-2">Menú</p>
+        <nav className="flex-1 px-2 py-3 overflow-y-auto">
+          <p className="text-[10px] font-bold text-gray-400 uppercase tracking-widest px-3 mb-2">Menú</p>
           <ul className="space-y-0.5">
             {nav.map(({ to, icon: Icon, label, badge }) => (
               <li key={to + label}>
                 <NavLink to={to} end={to === '/'} onClick={onClose}
                   className={({ isActive }) => clsx(
-                    'flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition-colors group',
-                    isActive ? `${rc.light} font-semibold` : 'text-gray-600 hover:bg-gray-50 hover:text-gray-900'
+                    'flex items-center gap-3 px-3 py-2.5 rounded-xl text-sm font-medium transition-all duration-150 group relative',
+                    isActive
+                      ? `${rc.light} font-semibold shadow-sm`
+                      : 'text-gray-500 hover:bg-gray-50 hover:text-gray-800'
                   )}
                 >
                   {({ isActive }) => (
                     <>
-                      <Icon size={17} className={isActive ? '' : 'text-gray-400 group-hover:text-gray-600'} />
-                      <span className="flex-1">{label}</span>
+                      {isActive && (
+                        <span className={clsx('absolute left-0 top-1/2 -translate-y-1/2 w-1 h-5 rounded-r-full', rc.accent)} />
+                      )}
+                      <Icon size={16} className={clsx(
+                        'shrink-0 transition-transform duration-150',
+                        isActive ? '' : 'text-gray-400 group-hover:text-gray-600 group-hover:scale-110'
+                      )} />
+                      <span className="flex-1 truncate">{label}</span>
                       {badge === 'inbox' && pendingCount > 0 && (
-                        <span className="bg-red-500 text-white text-xs font-bold px-1.5 py-0.5 rounded-full min-w-[20px] text-center">
-                          {pendingCount}
+                        <span className="bg-red-500 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full min-w-[18px] text-center leading-none">
+                          {pendingCount > 9 ? '9+' : pendingCount}
                         </span>
                       )}
                     </>
@@ -178,21 +186,21 @@ export default function Sidebar({ isOpen, onClose }) {
         </nav>
 
         {/* Footer */}
-        <div className="px-4 py-3 border-t border-gray-100 space-y-1">
-          <div className="flex items-center gap-3 px-2 py-1.5 rounded-lg">
-            <div className={clsx('w-8 h-8 rounded-full flex items-center justify-center text-xs font-bold text-white', rc.accent)}>
-              {currentUser?.name?.[0] || '?'}
+        <div className="px-3 py-3 border-t border-gray-100">
+          <div className="flex items-center gap-3 px-2 py-2 rounded-xl hover:bg-gray-50 transition-colors cursor-default">
+            <div className={clsx('w-8 h-8 rounded-xl flex items-center justify-center text-xs font-bold text-white shrink-0', rc.accent)}>
+              {currentUser?.name?.split(' ').map(w=>w[0]).slice(0,2).join('') || '?'}
             </div>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-gray-900 truncate">{currentUser?.name || 'Usuario'}</p>
-              <p className="text-xs text-gray-500 truncate">{currentUser?.username}</p>
+              <p className="text-xs font-semibold text-gray-900 truncate">{currentUser?.name || 'Usuario'}</p>
+              <p className="text-[10px] text-gray-400 truncate">{currentUser?.username}</p>
             </div>
           </div>
           <button
             onClick={logout}
-            className="w-full flex items-center gap-2 px-3 py-2 text-sm text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+            className="w-full mt-1 flex items-center gap-2 px-3 py-2 text-xs font-semibold text-red-500 hover:bg-red-50 hover:text-red-700 rounded-xl transition-all"
           >
-            <LogOut size={15} /> Cerrar sesión
+            <LogOut size={14} /> Cerrar sesión
           </button>
         </div>
       </aside>

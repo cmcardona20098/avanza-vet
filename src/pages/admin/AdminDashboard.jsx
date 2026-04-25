@@ -65,7 +65,7 @@ function ApptIndicator({ label, pending, completed, color }) {
 
 export default function AdminDashboard() {
   const navigate = useNavigate()
-  const { appointments, inbox, pendingCount, pets, owners, users, inventory, role, activeClinicId, currentClinic, setActiveClinic } = useApp()
+  const { appointments, inbox, pendingCount, pets, owners, users, inventory, role, activeClinicId, currentClinic, setActiveClinic, currentUser } = useApp()
   const [showIncome, setShowIncome]             = useState(false)
   const [showIncomeDetail, setShowIncomeDetail] = useState(false)
 
@@ -118,8 +118,15 @@ export default function AdminDashboard() {
 
   const isCore = role === 'core'
 
+  const greet = () => {
+    const h = new Date().getHours()
+    if (h < 12) return 'Buenos días'
+    if (h < 18) return 'Buenas tardes'
+    return 'Buenas noches'
+  }
+
   return (
-    <div className="space-y-6 max-w-7xl mx-auto">
+    <div className="space-y-5 max-w-7xl mx-auto">
 
       {/* Banner Core viendo clínica */}
       {isCore && activeClinicId && currentClinic && (
@@ -137,6 +144,36 @@ export default function AdminDashboard() {
           >
             <ArrowLeft size={13} /> Panel global
           </button>
+        </div>
+      )}
+
+      {/* Hero */}
+      {!isCore && (
+        <div className="bg-gradient-to-br from-blue-600 via-blue-700 to-indigo-800 rounded-3xl p-6 text-white shadow-lg shadow-blue-200/40 relative overflow-hidden">
+          <div className="absolute inset-0 opacity-10" style={{backgroundImage:'radial-gradient(circle at 80% 20%, white 0%, transparent 60%)'}} />
+          <div className="relative flex items-start justify-between gap-4">
+            <div className="flex-1">
+              <p className="text-blue-200 text-sm font-medium">{greet()},</p>
+              <h1 className="text-2xl font-bold mt-0.5 leading-tight">{currentUser?.name || 'Administración'}</h1>
+              <p className="text-blue-200 text-sm mt-1.5">
+                {todayAppts.length > 0
+                  ? `${todayAppts.length} cita(s) hoy · ${pendingCount > 0 ? `${pendingCount} pendiente(s) de cobro` : 'todo cobrado ✓'}`
+                  : pendingCount > 0 ? `${pendingCount} servicio(s) pendiente(s) de cobro` : 'Todo al día ✓'}
+              </p>
+              <div className="flex gap-2 mt-4 flex-wrap">
+                <button onClick={() => navigate('/agenda')} className="inline-flex items-center gap-2 bg-white text-blue-700 font-bold px-4 py-2 rounded-xl hover:bg-blue-50 transition-colors text-sm shadow-sm">
+                  <CalendarDays size={14} /> Agenda
+                </button>
+                <button onClick={() => navigate('/bandeja')} className="inline-flex items-center gap-2 bg-white/20 hover:bg-white/30 text-white font-semibold px-4 py-2 rounded-xl transition-colors text-sm">
+                  <Inbox size={14} />
+                  Bandeja {pendingCount > 0 && <span className="bg-red-400 text-white text-[10px] font-bold px-1.5 py-0.5 rounded-full">{pendingCount}</span>}
+                </button>
+              </div>
+            </div>
+            <div className="w-14 h-14 bg-white/15 rounded-2xl flex items-center justify-center backdrop-blur-sm shrink-0">
+              <Stethoscope size={26} className="text-white" />
+            </div>
+          </div>
         </div>
       )}
 
