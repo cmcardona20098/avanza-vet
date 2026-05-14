@@ -17,6 +17,7 @@ import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminAgenda    from './pages/admin/AdminAgenda'
 import AdminInbox     from './pages/admin/AdminInbox'
 import PriceAdmin     from './pages/admin/PriceAdmin'
+import Services       from './pages/admin/Services'
 import UserAdmin      from './pages/admin/UserAdmin'
 import Inventory      from './pages/admin/Inventory'
 
@@ -61,6 +62,7 @@ export default function App() {
         <Route path="/agenda"         element={<AdminAgenda />} />
         <Route path="/bandeja"        element={<AdminInbox />} />
         <Route path="/precios"        element={<PriceAdmin />} />
+        <Route path="/servicios"      element={<Services />} />
         <Route path="/usuarios"       element={<UserAdmin />} />
         <Route path="/inventario"     element={<Inventory />} />
         {/* Vet */}

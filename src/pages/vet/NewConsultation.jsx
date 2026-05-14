@@ -16,11 +16,12 @@ import InvoicePreview from '../../components/billing/InvoicePreview'
 const STEPS = [
   { id: 1, label: 'Paciente',    icon: PawPrint     },
   { id: 2, label: 'Consulta',   icon: FileText     },
-  { id: 3, label: 'Diagnóstico',icon: Activity     },
-  { id: 4, label: 'Tratamiento',icon: Heart        },
-  { id: 5, label: 'Medicamentos',icon: Pill        },
-  { id: 6, label: 'Vacunas',    icon: Syringe      },
-  { id: 7, label: 'Resumen',    icon: ClipboardList },
+  { id: 3, label: 'Anamnesis',  icon: ClipboardList },
+  { id: 4, label: 'Diagnóstico',icon: Activity     },
+  { id: 5, label: 'Servicios',  icon: Heart        },
+  { id: 6, label: 'Medicamentos',icon: Pill        },
+  { id: 7, label: 'Vacunas',    icon: Syringe      },
+  { id: 8, label: 'Resumen',    icon: Star         },
 ]
 
 const FREQUENCY_OPTIONS = [
@@ -129,7 +130,7 @@ function PetCard({ pet, owner, hasAllergy }) {
   )
 }
 
-function BillingSummary({ consultationFee, medications, treatments, vaccinesApplied, dewormingsApplied, availableMeds, availableVax, availableDews, catalog }) {
+function BillingSummary({ consultationFee, medications, treatments, vaccinesApplied, dewormingsApplied, availableMeds, availableVax, availableDews, catalog, servicesApplied = [] }) {
   const medTotal   = medications.filter(m=>m.name).reduce((s,m) => {
     const inv = availableMeds.find(c=>c.id===m.catalogId)
     return s + (inv?.price||0) * (calcTotal(m.qtyPerDose,m.frequencyHours,m.durationDays)||0)
@@ -146,12 +147,14 @@ function BillingSummary({ consultationFee, medications, treatments, vaccinesAppl
     const inv = availableDews.find(c=>c.id===d.catalogId)
     return s + (inv?.price||0)
   },0)
-  const total = (consultationFee||0) + medTotal + treatTotal + vaxTotal + dewTotal
+  const svcTotal = servicesApplied.filter(s=>s.name).reduce((sum,s) => sum + s.price * Number(s.quantity||1), 0)
+  const total = (consultationFee||0) + medTotal + treatTotal + svcTotal + vaxTotal + dewTotal
 
   const rows = [
     { label:'Consulta médica',  amount: consultationFee||0, icon: Stethoscope,  show: true },
     { label:`${medications.filter(m=>m.name).length} medicamento(s)`,  amount:medTotal,   icon:Pill,       show: medications.some(m=>m.name) },
     { label:`${treatments.filter(t=>t.name).length} tratamiento(s)`,   amount:treatTotal, icon:Heart,      show: treatments.some(t=>t.name)  },
+    { label:`${servicesApplied.filter(s=>s.name).length} servicio(s) aplicado(s)`, amount:svcTotal, icon:Heart, show: servicesApplied.some(s=>s.name) },
     { label:`${vaccinesApplied.filter(v=>v.name).length} vacuna(s)`,   amount:vaxTotal,   icon:Syringe,    show: vaccinesApplied.some(v=>v.name) },
     { label:`${dewormingsApplied.filter(d=>d.name).length} desparasitante(s)`, amount:dewTotal, icon:Syringe, show: dewormingsApplied.some(d=>d.name) },
   ].filter(r=>r.show)
@@ -229,7 +232,7 @@ function HistoryTimeline({ records }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function NewConsultation() {
   const navigate = useNavigate()
-  const { pets, owners, catalog, inventory, medicalRecords, addInboxItem, currentUser, appointments, updateAppointmentStatus } = useApp()
+  const { pets, owners, catalog, inventory, medicalRecords, addInboxItem, currentUser, appointments, updateAppointmentStatus, services } = useApp()
 
   const availableMeds = inventory.filter(i => i.type === 'medication')
   const availableVax  = inventory.filter(i => i.type === 'vaccine')
@@ -249,6 +252,11 @@ export default function NewConsultation() {
   const [treatments,        setTreatments]        = useState([])
   const [vaccinesApplied,   setVaccinesApplied]   = useState([])
   const [dewormingsApplied, setDewormingsApplied] = useState([])
+
+  const [anamnesis,          setAnamnesis]         = useState('')
+  const [presumptiveDx,      setPrDx]              = useState('')
+  const [servicesApplied,    setServicesApplied]   = useState([])
+  const [svcCatFilter,       setSvcCatFilter]      = useState('Todos')
 
   // ── Follow-up state ───────────────────────────────────
   const [followUpDays,  setFollowUpDays]  = useState(null)
@@ -360,6 +368,12 @@ export default function NewConsultation() {
       }),
       consultationFee: catalog.consultationFee,
       observations, nextAppointment: nextAppt,
+      anamnesis, presumptiveDx,
+      services: servicesApplied.filter(s=>s.name).map(s => ({
+        name: s.name, serviceId: s.serviceId, category: s.category,
+        quantity: Number(s.quantity||1), price: s.price,
+        total: s.price * Number(s.quantity||1),
+      })),
     }
   }
 
@@ -490,6 +504,31 @@ export default function NewConsultation() {
   function renderStep3() {
     return (
       <div className="space-y-4">
+        <div className="bg-blue-50 border border-blue-100 rounded-2xl p-4">
+          <p className="text-xs font-bold text-blue-700 uppercase tracking-wide mb-1">Anamnesis</p>
+          <p className="text-xs text-blue-600">Historia clínica — síntomas, evolución y antecedentes del paciente</p>
+        </div>
+        <Textarea
+          label="Anamnesis / Historia clínica"
+          value={anamnesis}
+          onChange={e => setAnamnesis(e.target.value)}
+          placeholder="¿Cuándo comenzaron los síntomas? ¿Ha tenido episodios similares? ¿Cambios en alimentación, comportamiento? ¿Medicamentos previos?..."
+          rows={5}
+        />
+        <Textarea
+          label="Diagnóstico presuntivo"
+          value={presumptiveDx}
+          onChange={e => setPrDx(e.target.value)}
+          placeholder="Hipótesis diagnóstica inicial basada en signos clínicos y anamnesis..."
+          rows={3}
+        />
+      </div>
+    )
+  }
+
+  function renderStep4() {
+    return (
+      <div className="space-y-4">
         <Textarea
           label="Diagnóstico clínico"
           value={diagnosis}
@@ -524,7 +563,7 @@ export default function NewConsultation() {
     )
   }
 
-  function renderStep4() {
+  function renderStep5_treatments() {
     const allChips = catalog.treatments.length > 0
       ? catalog.treatments.map(t => t.name)
       : TREATMENT_CHIPS
@@ -602,6 +641,105 @@ export default function NewConsultation() {
   }
 
   function renderStep5() {
+    const svcCategories = ['Todos', ...[...new Set(services.map(s => s.category))]]
+    const filteredSvcs  = svcCatFilter === 'Todos' ? services : services.filter(s => s.category === svcCatFilter)
+    const selectedIds   = servicesApplied.map(s => s.serviceId)
+
+    return (
+      <div className="space-y-4">
+        <div className="bg-emerald-50 border border-emerald-100 rounded-2xl p-3 flex items-start gap-3">
+          <Heart size={16} className="text-emerald-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-emerald-800">Servicios aplicados</p>
+            <p className="text-xs text-emerald-600">Selecciona todos los servicios realizados durante esta consulta. El precio se carga automáticamente.</p>
+          </div>
+        </div>
+
+        {/* Category filter */}
+        <div className="flex flex-wrap gap-1.5">
+          {svcCategories.map(cat => (
+            <button key={cat} type="button" onClick={() => setSvcCatFilter(cat)}
+              className={`px-3 py-1 rounded-full text-xs font-semibold transition-colors ${svcCatFilter === cat ? 'bg-gray-800 text-white' : 'bg-white text-gray-600 border border-gray-200 hover:bg-gray-50'}`}>
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {services.length === 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 flex items-center gap-2">
+            <AlertTriangle size={14} className="text-amber-600" />
+            <p className="text-sm text-amber-800">No hay servicios configurados. Pide a Administración que los configure en Módulo de Servicios.</p>
+          </div>
+        )}
+
+        <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+          {filteredSvcs.map(svc => {
+            const isSelected = selectedIds.includes(svc.id)
+            return (
+              <button key={svc.id} type="button"
+                onClick={() => {
+                  if (isSelected) {
+                    setServicesApplied(p => p.filter(s => s.serviceId !== svc.id))
+                  } else {
+                    setServicesApplied(p => [...p, { serviceId: svc.id, name: svc.name, category: svc.category, price: svc.price, quantity: '1' }])
+                  }
+                }}
+                className={`flex items-center gap-3 p-3 rounded-xl border-2 text-left transition-all ${isSelected ? 'border-emerald-400 bg-emerald-50' : 'border-gray-100 bg-white hover:border-emerald-200 hover:bg-emerald-50/30'}`}>
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center shrink-0 ${isSelected ? 'bg-emerald-500' : 'bg-gray-100'}`}>
+                  {isSelected ? <CheckCircle size={14} className="text-white" /> : <Heart size={14} className="text-gray-400" />}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className={`text-sm font-semibold truncate ${isSelected ? 'text-emerald-800' : 'text-gray-800'}`}>{svc.name}</p>
+                  <p className="text-xs text-gray-500">{svc.category}</p>
+                </div>
+                <span className={`text-xs font-bold shrink-0 ${isSelected ? 'text-emerald-700' : 'text-gray-500'}`}>Q{svc.price}</span>
+              </button>
+            )
+          })}
+        </div>
+
+        {servicesApplied.length > 0 && (
+          <div className="border border-emerald-200 rounded-2xl overflow-hidden">
+            <div className="bg-emerald-50 px-4 py-2.5 flex items-center justify-between">
+              <p className="text-sm font-bold text-emerald-800">{servicesApplied.length} servicio(s) seleccionado(s)</p>
+              <p className="text-xs text-emerald-600 font-semibold">
+                Total: Q{servicesApplied.reduce((s, x) => s + x.price * Number(x.quantity || 1), 0).toFixed(2)}
+              </p>
+            </div>
+            <div className="p-4 space-y-2">
+              {servicesApplied.map((s, i) => (
+                <div key={s.serviceId} className="flex items-center gap-3">
+                  <div className="flex-1">
+                    <p className="text-sm font-semibold text-gray-800">{s.name}</p>
+                    <p className="text-xs text-gray-500">{s.category} · Q{s.price} c/u</p>
+                  </div>
+                  <input type="number" min="1" value={s.quantity}
+                    onChange={e => setServicesApplied(p => p.map((x, xi) => xi === i ? { ...x, quantity: e.target.value } : x))}
+                    className="w-16 text-center border border-gray-200 rounded-lg py-1 text-sm focus:outline-none focus:ring-1 focus:ring-emerald-400" />
+                  <span className="text-sm font-bold text-emerald-700 w-16 text-right">
+                    Q{(s.price * Number(s.quantity || 1)).toFixed(2)}
+                  </span>
+                  <button onClick={() => setServicesApplied(p => p.filter((_, xi) => xi !== i))}
+                    className="text-gray-300 hover:text-red-400 transition-colors">
+                    <X size={14} />
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {servicesApplied.length === 0 && (
+          <div className="text-center py-6 bg-gray-50 rounded-2xl">
+            <Heart size={28} className="text-gray-200 mx-auto mb-2" />
+            <p className="text-sm text-gray-400">Selecciona los servicios aplicados arriba</p>
+          </div>
+        )}
+      </div>
+    )
+  }
+
+  function renderStep6() {
     return (
       <div className="space-y-4">
         {availableMeds.length === 0 && (
@@ -707,7 +845,7 @@ export default function NewConsultation() {
     )
   }
 
-  function renderStep6() {
+  function renderStep7() {
     return (
       <div className="space-y-5">
         {/* Vacunas */}
@@ -804,7 +942,7 @@ export default function NewConsultation() {
     )
   }
 
-  function renderStep7() {
+  function renderStep8() {
     const inv = buildInvoice()
     return (
       <div className="space-y-5">
@@ -822,6 +960,7 @@ export default function NewConsultation() {
             {diagnosis && <div className="bg-white/10 rounded-xl p-3"><p className="text-gray-400 text-xs">Diagnóstico</p><p className="font-medium mt-0.5 line-clamp-2">{diagnosis}</p></div>}
             {inv.medications.length > 0 && <div className="bg-white/10 rounded-xl p-3"><p className="text-gray-400 text-xs">Medicamentos</p><p className="font-bold mt-0.5">{inv.medications.length}</p></div>}
             {inv.treatments.length > 0  && <div className="bg-white/10 rounded-xl p-3"><p className="text-gray-400 text-xs">Tratamientos</p><p className="font-bold mt-0.5">{inv.treatments.length}</p></div>}
+            {servicesApplied.length > 0 && <div className="bg-white/10 rounded-xl p-3"><p className="text-gray-400 text-xs">Servicios</p><p className="font-bold mt-0.5">{servicesApplied.length}</p></div>}
             {inv.vaccines.length > 0    && <div className="bg-white/10 rounded-xl p-3"><p className="text-gray-400 text-xs">Vacunas</p><p className="font-bold mt-0.5">{inv.vaccines.length}</p></div>}
             {inv.dewormings.length > 0  && <div className="bg-white/10 rounded-xl p-3"><p className="text-gray-400 text-xs">Desparasitantes</p><p className="font-bold mt-0.5">{inv.dewormings.length}</p></div>}
           </div>
@@ -899,6 +1038,20 @@ export default function NewConsultation() {
         </div>
       </div>
     )
+  }
+
+  function renderStep() {
+    switch(step) {
+      case 1: return renderStep1()
+      case 2: return renderStep2()
+      case 3: return renderStep3()
+      case 4: return renderStep4()
+      case 5: return renderStep5()
+      case 6: return renderStep6()
+      case 7: return renderStep7()
+      case 8: return renderStep8()
+      default: return renderStep1()
+    }
   }
 
   // ── Quick mode ────────────────────────────────────────
@@ -1012,7 +1165,7 @@ export default function NewConsultation() {
             </div>
 
             {/* Navigation */}
-            {step < 7 && (
+            {step < 8 && (
               <div className="flex items-center justify-between">
                 <button
                   onClick={() => setStep(s => Math.max(1, s-1))}
@@ -1023,7 +1176,7 @@ export default function NewConsultation() {
                 </button>
                 <span className="text-xs text-gray-400 font-medium">{step}/{STEPS.length}</span>
                 <button
-                  onClick={() => setStep(s => Math.min(7, s+1))}
+                  onClick={() => setStep(s => Math.min(8, s+1))}
                   className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-600 text-white font-bold text-sm shadow-sm shadow-emerald-200 transition-all"
                 >
                   Siguiente <ChevronRight size={16} />
@@ -1044,6 +1197,7 @@ export default function NewConsultation() {
               availableVax={availableVax}
               availableDews={availableDews}
               catalog={catalog}
+              servicesApplied={servicesApplied}
             />
           </div>
         </div>

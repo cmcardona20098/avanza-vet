@@ -1,9 +1,9 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react'
-import { defaultCatalog, defaultUsers, defaultInventory, defaultClinics, domainFromName, CLINIC_COLORS } from '../data/mockData'
+import { defaultCatalog, defaultUsers, defaultInventory, defaultClinics, domainFromName, CLINIC_COLORS, defaultServices } from '../data/mockData'
 
 const AppContext = createContext(null)
 
-const LS_KEY = 'vetcare_v6'
+const LS_KEY = 'vetcare_v7'
 
 function loadState() {
   try {
@@ -32,6 +32,7 @@ function getInitial() {
     inventory:           saved?.inventory           ?? defaultInventory,
     clinics:             saved?.clinics             ?? defaultClinics,
     activeClinicId:      saved?.activeClinicId      ?? null,
+    services:            saved?.services            ?? defaultServices,
   }
 }
 
@@ -321,6 +322,18 @@ export function AppProvider({ children }) {
   function deleteInventoryItem(id) {
     update({ inventory: state.inventory.filter(i => i.id !== id) })
   }
+
+  // ─── Services ────────────────────────────────────────
+  function addService(svc) {
+    update({ services: [...state.services, { ...svc, id: `srv${Date.now()}`, clinicId: effectiveClinicId || null }] })
+  }
+  function updateService(id, data) {
+    update({ services: state.services.map(s => s.id === id ? { ...s, ...data } : s) })
+  }
+  function deleteService(id) {
+    update({ services: state.services.filter(s => s.id !== id) })
+  }
+
   function adjustInventoryQuantity(id, delta) {
     update({ inventory: state.inventory.map(i => i.id === id ? { ...i, quantity: Math.max(0, i.quantity + delta) } : i) })
   }
@@ -442,6 +455,10 @@ export function AppProvider({ children }) {
     ? state.inventory.filter(i => !i.clinicId || i.clinicId === effectiveClinicId)
     : state.inventory
 
+  const filteredServices = effectiveClinicId
+    ? state.services.filter(s => !s.clinicId || s.clinicId === effectiveClinicId)
+    : state.services
+
   const pendingCount   = filteredInbox.filter(i => i.status === 'pending').length
   const role           = _currentRole
   const isCore         = _isCore
@@ -462,6 +479,7 @@ export function AppProvider({ children }) {
       groomingSessions:   filteredGroomingSessions,
       followUpSuggestions:filteredFollowUp,
       inventory:          filteredInventory,
+      services:           filteredServices,
       // Meta
       role, isCore, pendingCount, activeClinicId, currentClinic, effectiveClinicId,
       login, logout,
@@ -475,6 +493,7 @@ export function AppProvider({ children }) {
       startGroomingSession, stopGroomingSession,
       addFollowUpSuggestion, markFollowUpSent, updateFollowUpMessage,
       addInventoryItem, updateInventoryItem, deleteInventoryItem, adjustInventoryQuantity, importInventory,
+      addService, updateService, deleteService,
       addClinic, updateClinic, toggleClinicStatus, deleteClinic, setActiveClinic,
       clearAllData,
     }}>

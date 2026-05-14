@@ -1,5 +1,5 @@
 import { useState } from 'react'
-import { Plus, Stethoscope, Scissors, CalendarDays, Clock, User, PawPrint } from 'lucide-react'
+import { Plus, Stethoscope, Scissors, CalendarDays, Clock, User, PawPrint, Bell, Syringe, Activity } from 'lucide-react'
 import { useApp } from '../../context/AppContext'
 import Card, { CardHeader } from '../../components/ui/Card'
 import Badge from '../../components/ui/Badge'
@@ -11,7 +11,7 @@ const statusColors = { confirmed: 'blue', pending: 'yellow', cancelled: 'red', c
 const statusLabels = { confirmed: 'Confirmada', pending: 'Pendiente', cancelled: 'Cancelada', completed: 'Completada' }
 
 export default function AdminAgenda() {
-  const { appointments, addAppointment, updateAppointmentStatus, pets, owners, users } = useApp()
+  const { appointments, addAppointment, updateAppointmentStatus, pets, owners, users, vaccineRecords, dewormingRecords } = useApp()
   function getPet(id)    { return pets.find(p => p.id === id) }
   function getOwner(id)  { return owners.find(o => o.id === id) }
   function getUserName(a) {
@@ -33,6 +33,11 @@ export default function AdminAgenda() {
     acc[a.date].push(a)
     return acc
   }, {})
+
+  const todayStr = new Date().toISOString().split('T')[0]
+  const in7Days  = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
+  const upcomingVax = vaccineRecords.filter(v => v.nextDueDate && (v.nextDueDate <= in7Days || v.status === 'overdue')).slice(0, 6)
+  const upcomingDew = dewormingRecords.filter(d => d.nextDueDate && (d.nextDueDate <= in7Days || d.status === 'overdue')).slice(0, 4)
 
   return (
     <div className="max-w-5xl mx-auto space-y-5">
@@ -73,6 +78,48 @@ export default function AdminAgenda() {
           <button onClick={() => setFilterDate('')} className="text-xs text-gray-500 hover:text-gray-800">Limpiar fecha</button>
         )}
       </div>
+
+      {/* Recordatorios preventivos */}
+      {(upcomingVax.length > 0 || upcomingDew.length > 0) && (
+        <div className="bg-amber-50 border border-amber-200 rounded-2xl p-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Bell size={16} className="text-amber-600" />
+            <p className="text-sm font-bold text-amber-800">Recordatorios preventivos</p>
+            <Badge variant="yellow">{upcomingVax.length + upcomingDew.length}</Badge>
+            <p className="text-xs text-amber-500 ml-auto">Próximos 7 días</p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+            {upcomingVax.map(v => {
+              const pet = pets.find(p => p.id === v.petId)
+              const isOverdue = v.nextDueDate < todayStr
+              return (
+                <div key={v.id} className={`flex items-center gap-2.5 p-2.5 rounded-xl ${isOverdue ? 'bg-red-50 border border-red-100' : 'bg-white border border-amber-100'}`}>
+                  <Syringe size={13} className={isOverdue ? 'text-red-500' : 'text-amber-500'} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-800 truncate">{pet?.name || '—'} · {v.name}</p>
+                    <p className="text-xs text-gray-500">{isOverdue ? `Vencida el ${v.nextDueDate}` : `Vence ${v.nextDueDate}`}</p>
+                  </div>
+                  <Badge variant={isOverdue ? 'red' : 'yellow'}>{isOverdue ? 'Vencida' : 'Próxima'}</Badge>
+                </div>
+              )
+            })}
+            {upcomingDew.map(d => {
+              const pet = pets.find(p => p.id === d.petId)
+              const isOverdue = d.nextDueDate < todayStr
+              return (
+                <div key={d.id} className={`flex items-center gap-2.5 p-2.5 rounded-xl ${isOverdue ? 'bg-red-50 border border-red-100' : 'bg-white border border-amber-100'}`}>
+                  <Activity size={13} className={isOverdue ? 'text-red-500' : 'text-amber-500'} />
+                  <div className="flex-1 min-w-0">
+                    <p className="text-xs font-semibold text-gray-800 truncate">{pet?.name || '—'} · {d.product}</p>
+                    <p className="text-xs text-gray-500">{isOverdue ? `Vencido el ${d.nextDueDate}` : `Vence ${d.nextDueDate}`}</p>
+                  </div>
+                  <Badge variant={isOverdue ? 'red' : 'yellow'}>{isOverdue ? 'Vencido' : 'Próximo'}</Badge>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )}
 
       {/* Citas agrupadas */}
       {Object.entries(grouped).map(([date, dayAppts]) => (

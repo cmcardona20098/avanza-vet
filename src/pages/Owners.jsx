@@ -25,11 +25,15 @@ export default function Owners() {
     e.preventDefault()
     const fd = new FormData(e.target)
     const data = {
-      name:     fd.get('name'),
-      phone:    fd.get('phone'),
-      whatsapp: fd.get('whatsapp'),
-      email:    fd.get('email'),
-      address:  fd.get('address'),
+      name:             fd.get('name'),
+      phone:            fd.get('phone'),
+      whatsapp:         fd.get('whatsapp'),
+      email:            fd.get('email'),
+      address:          fd.get('address'),
+      contact2Name:     fd.get('contact2Name')     || '',
+      contact2Phone:    fd.get('contact2Phone')    || '',
+      contact2Relation: fd.get('contact2Relation') || '',
+      contact2Email:    fd.get('contact2Email')    || '',
     }
     if (editingOwner) {
       updateOwner(editingOwner.id, data)
@@ -108,6 +112,15 @@ export default function Owners() {
                             ))}
                           </div>
                       }
+                      {owner.contact2Name && (
+                        <div className="mt-1 pt-2 border-t border-gray-100 col-span-full sm:col-span-1">
+                          <p className="text-xs font-semibold text-gray-400 mb-1">2° contacto {owner.contact2Relation ? `(${owner.contact2Relation})` : ''}</p>
+                          <div className="flex items-center gap-1.5">
+                            <Phone size={11} className="text-gray-400 shrink-0" />
+                            <span className="text-xs text-gray-600">{owner.contact2Name} · {owner.contact2Phone}</span>
+                          </div>
+                        </div>
+                      )}
                     </div>
                   </div>
                   <div className="shrink-0 flex flex-col gap-2 items-end">
@@ -141,6 +154,16 @@ export default function Owners() {
           </div>
           <Input label="Correo electrónico" name="email" type="email" placeholder="nombre@email.com" defaultValue={editingOwner?.email} />
           <Textarea label="Dirección" name="address" placeholder="Dirección completa..." defaultValue={editingOwner?.address} />
+          {/* Segundo contacto */}
+          <div className="border border-gray-200 rounded-xl p-4 space-y-3">
+            <p className="text-sm font-semibold text-gray-700">Segundo contacto <span className="text-gray-400 font-normal text-xs">(opcional)</span></p>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <Input label="Nombre" name="contact2Name" placeholder="Ej. María López" defaultValue={editingOwner?.contact2Name} />
+              <Input label="Teléfono" name="contact2Phone" type="tel" placeholder="+502 1234 5678" defaultValue={editingOwner?.contact2Phone} />
+              <Input label="Relación / Parentesco" name="contact2Relation" placeholder="Ej. Esposo, familiar..." defaultValue={editingOwner?.contact2Relation} />
+              <Input label="Correo (opcional)" name="contact2Email" type="email" placeholder="correo@email.com" defaultValue={editingOwner?.contact2Email} />
+            </div>
+          </div>
           <div className="flex gap-3 justify-end pt-2">
             <Button variant="secondary" type="button" onClick={closeModal}>Cancelar</Button>
             <Button type="submit" icon={Plus}>{editingOwner ? 'Guardar cambios' : 'Registrar dueño'}</Button>

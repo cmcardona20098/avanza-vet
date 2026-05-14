@@ -31,7 +31,10 @@ function VaccineRow({ v, type = 'vaccine', pets }) {
           </div>
         </div>
       </td>
-      <td className="px-4 py-3 text-sm text-gray-700">{type === 'vaccine' ? v.name : v.product}</td>
+      <td className="px-4 py-3 text-sm text-gray-700">
+        {type === 'vaccine' ? v.name : v.product}
+        {type === 'deworming' && v.dose && <p className="text-xs text-blue-600">Dosis: {v.dose}</p>}
+      </td>
       {type === 'vaccine' && <td className="px-4 py-3 text-xs text-gray-500">{v.brand}</td>}
       <td className="px-4 py-3 text-xs text-gray-600">{v.appliedDate}</td>
       <td className="px-4 py-3 text-xs font-medium text-gray-900">{v.nextDueDate}</td>
@@ -74,6 +77,7 @@ export default function Vaccines() {
         petId:       fd.get('petId'),
         product:     fd.get('product'),
         type:        fd.get('type'),
+        dose:        fd.get('dose'),
         appliedDate: fd.get('appliedDate'),
         nextDueDate: fd.get('nextDueDate'),
         vet:         fd.get('vet'),
@@ -216,6 +220,7 @@ export default function Vaccines() {
                 <option value="internal">Interno</option>
                 <option value="external">Externo</option>
               </Select>
+              <Input label="Dosis aplicada" name="dose" placeholder="Ej. 5ml, 2 comprimidos, 0.5mg/kg" />
             </>
           )}
           <Input label="Fecha de aplicación" name="appliedDate" type="date" required defaultValue={new Date().toISOString().split('T')[0]} />

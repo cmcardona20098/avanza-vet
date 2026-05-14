@@ -2,7 +2,7 @@ import { NavLink, useNavigate } from 'react-router-dom'
 import {
   LayoutDashboard, PawPrint, ClipboardList, Syringe, CalendarDays,
   Users, MessageCircle, Stethoscope, Scissors,
-  Inbox, FilePlus, Calendar, Tag, LogOut, UserCog, Package,
+  Inbox, FilePlus, Calendar, LogOut, UserCog, Package,
   ShieldCheck, ArrowLeft, Building2
 } from 'lucide-react'
 import clsx from 'clsx'
@@ -13,7 +13,7 @@ const coreClinicNav = [
   { to: '/',            icon: LayoutDashboard, label: 'Dashboard'        },
   { to: '/agenda',      icon: CalendarDays,    label: 'Agenda General'   },
   { to: '/bandeja',     icon: Inbox,           label: 'Bandeja', badge: 'inbox' },
-  { to: '/precios',     icon: Tag,             label: 'Precios'          },
+  { to: '/servicios',   icon: Package,         label: 'Servicios'        },
   { to: '/usuarios',    icon: UserCog,         label: 'Usuarios'         },
   { to: '/mascotas',    icon: PawPrint,        label: 'Mascotas'         },
   { to: '/historial',   icon: ClipboardList,   label: 'Historial Médico' },
@@ -34,7 +34,7 @@ const adminNav = [
   { to: '/',            icon: LayoutDashboard, label: 'Dashboard'        },
   { to: '/agenda',      icon: CalendarDays,    label: 'Agenda General'   },
   { to: '/bandeja',     icon: Inbox,           label: 'Bandeja', badge: 'inbox' },
-  { to: '/precios',     icon: Tag,             label: 'Precios'          },
+  { to: '/servicios',   icon: Package,         label: 'Servicios'        },
   { to: '/mascotas',    icon: PawPrint,        label: 'Mascotas'         },
   { to: '/historial',   icon: ClipboardList,   label: 'Historial Médico' },
   { to: '/vacunas',     icon: Syringe,         label: 'Vacunas'          },

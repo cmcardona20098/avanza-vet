@@ -17,6 +17,7 @@ const pageTitles = {
   '/citas':          { admin: 'Citas' },
   '/duenos':         { admin: 'Dueños' },
   '/seguimiento':    { admin: 'Seguimiento con IA' },
+  '/servicios':      { admin: 'Módulo de Servicios', vet: 'Servicios', groomer: 'Servicios' },
 }
 
 export default function Layout({ children }) {
