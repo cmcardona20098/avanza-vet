@@ -7,6 +7,11 @@ import Button from '../../components/ui/Button'
 import Modal from '../../components/ui/Modal'
 import Input, { Select, Textarea } from '../../components/ui/Input'
 
+function localToday() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
+
 const statusColors = { confirmed: 'blue', pending: 'yellow', cancelled: 'red', completed: 'green' }
 const statusLabels = { confirmed: 'Confirmada', pending: 'Pendiente', cancelled: 'Cancelada', completed: 'Completada' }
 
@@ -34,7 +39,7 @@ export default function AdminAgenda() {
     return acc
   }, {})
 
-  const todayStr = new Date().toISOString().split('T')[0]
+  const todayStr = localToday()
   const in7Days  = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().split('T')[0]
   const upcomingVax = vaccineRecords.filter(v => v.nextDueDate && (v.nextDueDate <= in7Days || v.status === 'overdue')).slice(0, 6)
   const upcomingDew = dewormingRecords.filter(d => d.nextDueDate && (d.nextDueDate <= in7Days || d.status === 'overdue')).slice(0, 4)
@@ -287,7 +292,7 @@ function NewAppointmentForm({ onClose, onSave, pets, owners }) {
       </Select>
 
       <div className="grid grid-cols-2 gap-3">
-        <Input label="Fecha" name="date" type="date" required defaultValue={new Date().toISOString().split('T')[0]} />
+        <Input label="Fecha" name="date" type="date" required defaultValue={localToday()} />
         <Input label="Hora" name="time" type="time" required defaultValue="10:00" />
       </div>
 

@@ -3,7 +3,7 @@ import { defaultCatalog, defaultUsers, defaultInventory, defaultClinics, domainF
 
 const AppContext = createContext(null)
 
-const LS_KEY = 'vetcare_v7'
+const LS_KEY = 'vetcare_v8'
 
 function loadState() {
   try {
@@ -33,6 +33,7 @@ function getInitial() {
     clinics:             saved?.clinics             ?? defaultClinics,
     activeClinicId:      saved?.activeClinicId      ?? null,
     services:            saved?.services            ?? defaultServices,
+    sales:               saved?.sales               ?? [],
   }
 }
 
@@ -246,11 +247,17 @@ export function AppProvider({ children }) {
     update({ inbox: updatedInbox, inventory: updatedInventory, medicalRecords: updatedMedicalRecords, followUpSuggestions: updatedFollowUp })
     return newItem
   }
-  function markAsPaid(id, paymentMethod = 'cash') {
+  function markAsPaid(id, payments = {}) {
     const paidAt = new Date().toLocaleString('es-GT')
+    // payments can be { cash, card, transfer } object or legacy string
+    const payObj = (typeof payments === 'string')
+      ? { cash: 0, card: 0, transfer: 0, legacy: payments }
+      : payments
+    const primaryMethod = typeof payments === 'string' ? payments
+      : Object.entries(payObj).filter(([k,v]) => Number(v) > 0).map(([k]) => k).join('+') || 'cash'
     update({
       inbox: state.inbox.map(i =>
-        i.id === id ? { ...i, status: 'paid', paidAt, paymentMethod } : i
+        i.id === id ? { ...i, status: 'paid', paidAt, payments: payObj, paymentMethod: primaryMethod } : i
       ),
       medicalRecords: state.medicalRecords.map(r =>
         r.inboxItemId === id ? { ...r, billingStatus: 'paid', paidAt } : r
@@ -321,6 +328,31 @@ export function AppProvider({ children }) {
   }
   function deleteInventoryItem(id) {
     update({ inventory: state.inventory.filter(i => i.id !== id) })
+  }
+
+  function addSale(sale) {
+    const saleId = `sale${Date.now()}`
+    const today  = new Date().toISOString().split('T')[0]
+    const newSale = {
+      ...sale,
+      id: saleId,
+      date: today,
+      createdAt: new Date().toLocaleString('es-GT'),
+      clinicId: effectiveClinicId || null,
+    }
+    // Deduct inventory
+    let updatedInventory = [...state.inventory]
+    sale.items?.forEach(item => {
+      const idx = updatedInventory.findIndex(i => i.id === item.inventoryId)
+      if (idx >= 0) {
+        updatedInventory[idx] = {
+          ...updatedInventory[idx],
+          quantity: Math.max(0, updatedInventory[idx].quantity - item.quantity)
+        }
+      }
+    })
+    update({ sales: [...state.sales, newSale], inventory: updatedInventory })
+    return newSale
   }
 
   // ─── Services ────────────────────────────────────────
@@ -459,6 +491,10 @@ export function AppProvider({ children }) {
     ? state.services.filter(s => !s.clinicId || s.clinicId === effectiveClinicId)
     : state.services
 
+  const filteredSales = effectiveClinicId
+    ? state.sales.filter(s => !s.clinicId || s.clinicId === effectiveClinicId)
+    : state.sales
+
   const pendingCount   = filteredInbox.filter(i => i.status === 'pending').length
   const role           = _currentRole
   const isCore         = _isCore
@@ -480,6 +516,7 @@ export function AppProvider({ children }) {
       followUpSuggestions:filteredFollowUp,
       inventory:          filteredInventory,
       services:           filteredServices,
+      sales:              filteredSales,
       // Meta
       role, isCore, pendingCount, activeClinicId, currentClinic, effectiveClinicId,
       login, logout,
@@ -492,7 +529,7 @@ export function AppProvider({ children }) {
       addInboxItem, markAsPaid, markWhatsAppSent,
       startGroomingSession, stopGroomingSession,
       addFollowUpSuggestion, markFollowUpSent, updateFollowUpMessage,
-      addInventoryItem, updateInventoryItem, deleteInventoryItem, adjustInventoryQuantity, importInventory,
+      addInventoryItem, updateInventoryItem, deleteInventoryItem, adjustInventoryQuantity, importInventory, addSale,
       addService, updateService, deleteService,
       addClinic, updateClinic, toggleClinicStatus, deleteClinic, setActiveClinic,
       clearAllData,

@@ -275,7 +275,7 @@ function PetForm({ onClose, editingPet }) {
 
         <Select label="Estado reproductivo" name="reproductiveStatus" defaultValue={editingPet?.reproductiveStatus}>
           <option value="">— Seleccionar —</option>
-          <option>Entero</option><option>Esterilizado</option><option>Castrado</option><option>Otro</option>
+          <option>Reproductivo</option><option>No reproductivo</option>
         </Select>
 
         <Input label="Alergias" name="allergies" placeholder="Ej. Penicilina" defaultValue={editingPet?.allergies} />

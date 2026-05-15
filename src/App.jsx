@@ -16,6 +16,8 @@ import WhatsAppFollowUp from './pages/WhatsAppFollowUp'
 import AdminDashboard from './pages/admin/AdminDashboard'
 import AdminAgenda    from './pages/admin/AdminAgenda'
 import AdminInbox     from './pages/admin/AdminInbox'
+import Petshop        from './pages/admin/Petshop'
+import Caja           from './pages/admin/Caja'
 import PriceAdmin     from './pages/admin/PriceAdmin'
 import Services       from './pages/admin/Services'
 import UserAdmin      from './pages/admin/UserAdmin'
@@ -61,6 +63,8 @@ export default function App() {
         {/* Admin */}
         <Route path="/agenda"         element={<AdminAgenda />} />
         <Route path="/bandeja"        element={<AdminInbox />} />
+        <Route path="/petshop"        element={<Petshop />} />
+        <Route path="/caja"           element={<Caja />} />
         <Route path="/precios"        element={<PriceAdmin />} />
         <Route path="/servicios"      element={<Services />} />
         <Route path="/usuarios"       element={<UserAdmin />} />

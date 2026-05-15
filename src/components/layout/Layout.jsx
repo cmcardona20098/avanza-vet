@@ -18,6 +18,8 @@ const pageTitles = {
   '/duenos':         { admin: 'Dueños' },
   '/seguimiento':    { admin: 'Seguimiento con IA' },
   '/servicios':      { admin: 'Módulo de Servicios', vet: 'Servicios', groomer: 'Servicios' },
+  '/petshop':        { admin: 'Petshop / Ventas',  vet: 'Ventas',  groomer: 'Ventas' },
+  '/caja':           { admin: 'Cuadre de Caja',     vet: 'Caja',    groomer: 'Caja'   },
 }
 
 export default function Layout({ children }) {

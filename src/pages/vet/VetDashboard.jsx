@@ -1,4 +1,9 @@
 import { useNavigate } from 'react-router-dom'
+
+function getLocalToday() {
+  const d = new Date()
+  return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`
+}
 import {
   FilePlus, PawPrint, Syringe, ClipboardList, Clock, AlertTriangle,
   Play, Send, CheckCircle, Stethoscope, ArrowRight, Calendar
@@ -38,12 +43,12 @@ export default function VetDashboard() {
   const navigate = useNavigate()
   const { appointments, pets, owners, vaccineRecords, initiateAppointment, currentUser } = useApp()
 
-  const today = new Date().toISOString().split('T')[0]
+  const today = getLocalToday()
   const week  = getWeekRange()
   const month = getMonthRange()
 
   const vetAppts    = appointments.filter(a => a.assignedTo === 'vet' || a.serviceType === 'consultation')
-  const todayAppts  = vetAppts.filter(a => a.date === today)
+  const todayAppts  = vetAppts.filter(a => a.date === today || a.status === 'initiated')
   const upcoming    = vetAppts.filter(a => a.date > today && a.status !== 'cancelled').slice(0, 3)
   const pending     = todayAppts.filter(a => !DONE.includes(a.status))
   const attended    = todayAppts.filter(a => DONE.includes(a.status)).length

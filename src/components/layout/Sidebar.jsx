@@ -3,7 +3,7 @@ import {
   LayoutDashboard, PawPrint, ClipboardList, Syringe, CalendarDays,
   Users, MessageCircle, Stethoscope, Scissors,
   Inbox, FilePlus, Calendar, LogOut, UserCog, Package,
-  ShieldCheck, ArrowLeft, Building2
+  ShieldCheck, ArrowLeft, Building2, ShoppingCart, DollarSign
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '../../context/AppContext'
@@ -21,6 +21,8 @@ const coreClinicNav = [
   { to: '/citas',       icon: CalendarDays,    label: 'Citas'            },
   { to: '/duenos',      icon: Users,           label: 'Dueños'           },
   { to: '/inventario',  icon: Package,         label: 'Inventario'       },
+  { to: '/petshop',     icon: ShoppingCart,    label: 'Petshop'          },
+  { to: '/caja',        icon: DollarSign,      label: 'Caja'             },
   { to: '/seguimiento', icon: MessageCircle,   label: 'Seguimiento IA'   },
 ]
 
@@ -41,6 +43,8 @@ const adminNav = [
   { to: '/citas',       icon: CalendarDays,    label: 'Citas'            },
   { to: '/duenos',      icon: Users,           label: 'Dueños'           },
   { to: '/inventario',  icon: Package,         label: 'Inventario'       },
+  { to: '/petshop',     icon: ShoppingCart,    label: 'Petshop'          },
+  { to: '/caja',        icon: DollarSign,      label: 'Caja'             },
   { to: '/seguimiento', icon: MessageCircle,   label: 'Seguimiento IA'   },
 ]
 

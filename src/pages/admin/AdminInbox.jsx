@@ -19,13 +19,16 @@ const methodLabel = { cash: 'Efectivo', card: 'Tarjeta', transfer: 'Transferenci
 const methodVariant = { cash: 'green', card: 'blue', transfer: 'purple' }
 
 function calcTotal(invoice) {
+  if (!invoice) return 0
   const fee    = Number(invoice.consultationFee || 0)
   const meds   = (invoice.medications     || []).reduce((s, m) => s + Number(m.price || 0) * (m.totalQuantity || 1), 0)
   const treats = (invoice.treatments      || []).reduce((s, t) => s + Number(t.price || 0) * Number(t.quantity || 1), 0)
+  const aux    = (invoice.auxiliares      || []).reduce((s, a) => s + Number(a.price || 0) * Number(a.quantity || 1), 0)
   const vax    = (invoice.vaccines        || []).reduce((s, v) => s + Number(v.price || 0), 0)
   const dew    = (invoice.dewormings      || []).reduce((s, d) => s + Number(d.price || 0), 0)
   const groom  = (invoice.groomingServices|| []).reduce((s, g) => s + Number(g.price || 0), 0)
-  return fee + meds + treats + vax + dew + groom
+  const svcs   = (invoice.services        || []).reduce((s, x) => s + Number(x.price || 0) * Number(x.quantity || 1), 0)
+  return fee + meds + treats + aux + vax + dew + groom + svcs
 }
 
 export default function AdminInbox() {
@@ -33,7 +36,7 @@ export default function AdminInbox() {
   const [selected, setSelected]     = useState(null)
   const [tab, setTab]               = useState('pending')
   const [payModal, setPayModal]     = useState(null)   // { itemId, amount }
-  const [payMethod, setPayMethod]   = useState('cash')
+  const [payAmounts, setPayAmounts] = useState({ cash: '', card: '', transfer: '' })
 
   const filtered = tab === 'all' ? inbox : inbox.filter(i => i.status === tab)
 
@@ -41,12 +44,18 @@ export default function AdminInbox() {
   function getOwner(id) { return owners.find(o => o.id === id) }
 
   function openPayModal(item) {
-    setPayMethod('cash')
-    setPayModal({ itemId: item.id, amount: calcTotal(item.invoice) })
+    const total = calcTotal(item.invoice)
+    setPayAmounts({ cash: String(total.toFixed(2)), card: '', transfer: '' })
+    setPayModal({ itemId: item.id, amount: total })
   }
 
   function confirmPay() {
-    markAsPaid(payModal.itemId, payMethod)
+    const payments = {
+      cash:     Number(payAmounts.cash)     || 0,
+      card:     Number(payAmounts.card)     || 0,
+      transfer: Number(payAmounts.transfer) || 0,
+    }
+    markAsPaid(payModal.itemId, payments)
     setPayModal(null)
     if (selected?.id === payModal.itemId) setSelected(null)
   }
@@ -204,33 +213,50 @@ export default function AdminInbox() {
               Total a cobrar: <span className="text-xl font-bold text-gray-900">{Q(payModal.amount)}</span>
             </p>
 
-            <div className="grid grid-cols-1 gap-3">
-              {paymentMethods.map(pm => {
-                const Icon = pm.icon
+            <div className="space-y-4">
+              <div className="grid grid-cols-3 gap-3">
+                {[
+                  { key:'cash',     label:'Efectivo',      icon:'💵', color:'emerald' },
+                  { key:'card',     label:'Tarjeta',       icon:'💳', color:'blue'    },
+                  { key:'transfer', label:'Transferencia', icon:'🏦', color:'violet'  },
+                ].map(m=>(
+                  <div key={m.key}>
+                    <label className={`text-xs font-semibold text-${m.color}-700 block mb-1`}>{m.icon} {m.label}</label>
+                    <div className="relative">
+                      <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-sm font-medium">Q</span>
+                      <input type="number" min="0" step="0.01"
+                        value={payAmounts[m.key]}
+                        onChange={e=>setPayAmounts(p=>({...p,[m.key]:e.target.value}))}
+                        className={`w-full pl-6 pr-2 py-2 border-2 rounded-xl text-sm focus:outline-none focus:ring-2 ${Number(payAmounts[m.key])>0?`border-${m.color}-300 bg-${m.color}-50`:'border-gray-200'}`}
+                        placeholder="0.00"/>
+                    </div>
+                  </div>
+                ))}
+              </div>
+              {(() => {
+                const sum = (Number(payAmounts.cash)||0)+(Number(payAmounts.card)||0)+(Number(payAmounts.transfer)||0)
+                const diff = Math.abs(sum - payModal.amount)
+                const ok = diff < 0.01
                 return (
-                  <button
-                    key={pm.key}
-                    type="button"
-                    onClick={() => setPayMethod(pm.key)}
-                    className={`flex items-center gap-3 p-4 rounded-xl border-2 transition-all ${
-                      payMethod === pm.key ? pm.color + ' border-2' : 'border-gray-200 bg-white hover:border-gray-300'
-                    }`}
-                  >
-                    <Icon size={20} className={payMethod === pm.key ? '' : 'text-gray-400'} />
-                    <span className={`font-semibold text-sm ${payMethod === pm.key ? '' : 'text-gray-700'}`}>
-                      {pm.label}
-                    </span>
-                    {payMethod === pm.key && (
-                      <CheckCircle size={16} className="ml-auto text-current" />
-                    )}
-                  </button>
+                  <div className={`rounded-xl p-3 ${ok?'bg-green-50 border border-green-200':'bg-red-50 border border-red-200'}`}>
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-semibold text-gray-700">Total ingresado:</span>
+                      <span className={`font-bold ${ok?'text-green-700':'text-red-700'}`}>{Q(sum)}</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-1">
+                      <span className="text-xs text-gray-500">Total factura:</span>
+                      <span className="text-xs font-bold text-gray-700">{Q(payModal.amount)}</span>
+                    </div>
+                    {!ok&&<p className="text-xs text-red-600 mt-1">⚠ La suma debe ser igual al total de la factura</p>}
+                  </div>
                 )
-              })}
+              })()}
             </div>
 
             <div className="flex gap-3 pt-2">
               <Button variant="secondary" className="flex-1" onClick={() => setPayModal(null)}>Cancelar</Button>
-              <Button variant="success" className="flex-1" icon={CheckCircle} onClick={confirmPay}>
+              <Button variant="success" className="flex-1" icon={CheckCircle} onClick={confirmPay}
+                disabled={Math.abs((Number(payAmounts.cash)||0)+(Number(payAmounts.card)||0)+(Number(payAmounts.transfer)||0)-payModal.amount)>=0.01}>
                 Confirmar cobro
               </Button>
             </div>
