@@ -22,6 +22,8 @@ import PriceAdmin     from './pages/admin/PriceAdmin'
 import Services       from './pages/admin/Services'
 import UserAdmin      from './pages/admin/UserAdmin'
 import Inventory      from './pages/admin/Inventory'
+import Suppliers      from './pages/admin/Suppliers'
+import PurchaseOrders from './pages/admin/PurchaseOrders'
 
 // Vet
 import VetDashboard    from './pages/vet/VetDashboard'
@@ -69,6 +71,8 @@ export default function App() {
         <Route path="/servicios"      element={<Services />} />
         <Route path="/usuarios"       element={<UserAdmin />} />
         <Route path="/inventario"     element={<Inventory />} />
+        <Route path="/proveedores"    element={<Suppliers />} />
+        <Route path="/ordenes-compra" element={<PurchaseOrders />} />
         {/* Vet */}
         <Route path="/mi-agenda"      element={<AgendaRouter />} />
         <Route path="/nueva-consulta" element={<NewConsultation />} />

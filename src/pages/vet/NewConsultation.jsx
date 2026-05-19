@@ -262,11 +262,12 @@ function ServiceSelector({ services, selected, onToggle, onQtyChange }) {
 // ── Main Component ────────────────────────────────────────────────────────────
 export default function NewConsultation() {
   const navigate = useNavigate()
-  const { pets, owners, catalog, inventory, medicalRecords, addInboxItem, currentUser, appointments, updateAppointmentStatus, services } = useApp()
+  const { pets, owners, catalog, inventory, inventoryActive, medicalRecords, addInboxItem, currentUser, appointments, updateAppointmentStatus, services } = useApp()
 
-  const availableMeds = inventory.filter(i=>i.type==='medication')
-  const availableVax  = inventory.filter(i=>i.type==='vaccine')
-  const availableDews = inventory.filter(i=>i.type==='deworming')
+  const activeInv     = inventoryActive || inventory
+  const availableMeds = activeInv.filter(i=>i.type==='medication'||i.category==='Medicamentos')
+  const availableVax  = activeInv.filter(i=>i.type==='vaccine'||i.category==='Vacunas')
+  const availableDews = activeInv.filter(i=>i.type==='deworming'||i.category==='Desparasitantes')
 
   // Services by category
   const auxServices   = services.filter(s=>['Laboratorio','Imágenes'].includes(s.category))

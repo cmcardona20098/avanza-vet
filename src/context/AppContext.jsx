@@ -3,7 +3,7 @@ import { defaultCatalog, defaultUsers, defaultInventory, defaultClinics, domainF
 
 const AppContext = createContext(null)
 
-const LS_KEY = 'vetcare_v8'
+const LS_KEY = 'vetcare_v9'
 
 function loadState() {
   try {
@@ -34,6 +34,8 @@ function getInitial() {
     activeClinicId:      saved?.activeClinicId      ?? null,
     services:            saved?.services            ?? defaultServices,
     sales:               saved?.sales               ?? [],
+    suppliers:           saved?.suppliers           ?? [],
+    purchaseOrders:      saved?.purchaseOrders      ?? [],
   }
 }
 
@@ -247,6 +249,7 @@ export function AppProvider({ children }) {
     update({ inbox: updatedInbox, inventory: updatedInventory, medicalRecords: updatedMedicalRecords, followUpSuggestions: updatedFollowUp })
     return newItem
   }
+
   function markAsPaid(id, payments = {}) {
     const paidAt = new Date().toLocaleString('es-GT')
     // payments can be { cash, card, transfer } object or legacy string
@@ -262,6 +265,17 @@ export function AppProvider({ children }) {
       medicalRecords: state.medicalRecords.map(r =>
         r.inboxItemId === id ? { ...r, billingStatus: 'paid', paidAt } : r
       ),
+    })
+  }
+
+  // Add petshop items to existing inbox entry (open account)
+  function addToInboxItem(inboxId, items) {
+    update({
+      inbox: state.inbox.map(i =>
+        i.id === inboxId
+          ? { ...i, petshopItems: [...(i.petshopItems || []), ...items] }
+          : i
+      )
     })
   }
 
@@ -321,7 +335,23 @@ export function AppProvider({ children }) {
 
   // ─── Inventory ───────────────────────────────────────
   function addInventoryItem(item) {
-    update({ inventory: [...state.inventory, { ...item, id: `inv${Date.now()}`, createdAt: new Date().toISOString().split('T')[0] }] })
+    const newItem = {
+      sku: '',
+      barcode: '',
+      brand: '',
+      minStock: 0,
+      purchasePrice: 0,
+      status: 'active',
+      expiryDate: '',
+      supplierId: '',
+      uomSale: '',
+      uomPurchase: '',
+      conversionFactor: 1,
+      ...item,
+      id: `inv${Date.now()}`,
+      createdAt: new Date().toISOString().split('T')[0],
+    }
+    update({ inventory: [...state.inventory, newItem] })
   }
   function updateInventoryItem(id, data) {
     update({ inventory: state.inventory.map(i => i.id === id ? { ...i, ...data } : i) })
@@ -370,7 +400,6 @@ export function AppProvider({ children }) {
     update({ inventory: state.inventory.map(i => i.id === id ? { ...i, quantity: Math.max(0, i.quantity + delta) } : i) })
   }
   // Internal: deduct medications/vaccines/dewormings from inventory
-  // Matches by inventory item id first (new records), falls back to catalogId field (legacy records like 'm1')
   function _deductInventory(invoice, baseInventory) {
     let inv = [...baseInventory]
     const deduct = (itemId, qty) => {
@@ -383,6 +412,63 @@ export function AppProvider({ children }) {
     invoice.vaccines?.forEach(v => deduct(v.catalogId, 1))
     invoice.dewormings?.forEach(d => deduct(d.catalogId, 1))
     return inv
+  }
+
+  // ─── Suppliers ───────────────────────────────────────
+  function addSupplier(supplier) {
+    const newSupplier = {
+      ...supplier,
+      id: `sup${Date.now()}`,
+      clinicId: effectiveClinicId || null,
+      createdAt: new Date().toISOString().split('T')[0],
+    }
+    update({ suppliers: [...state.suppliers, newSupplier] })
+    return newSupplier
+  }
+  function updateSupplier(id, data) {
+    update({ suppliers: state.suppliers.map(s => s.id === id ? { ...s, ...data } : s) })
+  }
+  function deleteSupplier(id) {
+    update({ suppliers: state.suppliers.filter(s => s.id !== id) })
+  }
+
+  // ─── Purchase Orders ──────────────────────────────────
+  function addPurchaseOrder(po) {
+    const newPO = {
+      ...po,
+      id: `po${Date.now()}`,
+      date: new Date().toISOString().split('T')[0],
+      clinicId: effectiveClinicId || null,
+      status: po.status || 'draft',
+    }
+    update({ purchaseOrders: [...state.purchaseOrders, newPO] })
+    return newPO
+  }
+  function updatePurchaseOrder(id, data) {
+    update({ purchaseOrders: state.purchaseOrders.map(p => p.id === id ? { ...p, ...data } : p) })
+  }
+  function receivePurchaseOrder(poId, receivedItems) {
+    // Update inventory stock using conversionFactor
+    let updatedInventory = [...state.inventory]
+    receivedItems.forEach(ri => {
+      const idx = updatedInventory.findIndex(i => i.id === ri.productId)
+      if (idx >= 0) {
+        const convFactor = updatedInventory[idx].conversionFactor || 1
+        const newStock = (updatedInventory[idx].quantity || 0) + (ri.receivedQty * convFactor)
+        updatedInventory[idx] = {
+          ...updatedInventory[idx],
+          quantity: newStock,
+          ...(ri.purchasePrice != null ? { purchasePrice: ri.purchasePrice } : {}),
+        }
+      }
+    })
+    // Update PO status
+    const updatedPOs = state.purchaseOrders.map(p =>
+      p.id === poId
+        ? { ...p, status: 'received', receivedDate: new Date().toISOString().split('T')[0], receivedItems }
+        : p
+    )
+    update({ inventory: updatedInventory, purchaseOrders: updatedPOs })
   }
 
   // ─── Follow-up suggestions ───────────────────────────
@@ -460,6 +546,8 @@ export function AppProvider({ children }) {
       groomingSessions:    state.groomingSessions.filter(s => s.clinicId !== clinicId),
       followUpSuggestions: state.followUpSuggestions.filter(f => f.clinicId !== clinicId),
       inventory:           state.inventory.filter(i => i.clinicId !== clinicId),
+      suppliers:           state.suppliers.filter(s => s.clinicId !== clinicId),
+      purchaseOrders:      state.purchaseOrders.filter(p => p.clinicId !== clinicId),
       activeClinicId:      state.activeClinicId === clinicId ? null : state.activeClinicId,
     })
   }
@@ -468,7 +556,6 @@ export function AppProvider({ children }) {
   }
 
   // ─── Multi-tenant data filtering ─────────────────────
-  // Each clinic sees only its own records. Core sees clinic data when inside one.
   const _filter = (arr) =>
     effectiveClinicId
       ? arr.filter(r => !r.clinicId || r.clinicId === effectiveClinicId)
@@ -483,9 +570,14 @@ export function AppProvider({ children }) {
   const filteredDewormingRecords = _filter(state.dewormingRecords)
   const filteredGroomingSessions = _filter(state.groomingSessions)
   const filteredFollowUp         = _filter(state.followUpSuggestions)
-  const filteredInventory        = effectiveClinicId
+
+  // ALL inventory items for admin Inventory module (includes inactive)
+  const filteredInventory = effectiveClinicId
     ? state.inventory.filter(i => !i.clinicId || i.clinicId === effectiveClinicId)
     : state.inventory
+
+  // Active-only inventory for Petshop / NewConsultation
+  const filteredInventoryActive = filteredInventory.filter(i => i.status !== 'inactive')
 
   const filteredServices = effectiveClinicId
     ? state.services.filter(s => !s.clinicId || s.clinicId === effectiveClinicId)
@@ -494,6 +586,14 @@ export function AppProvider({ children }) {
   const filteredSales = effectiveClinicId
     ? state.sales.filter(s => !s.clinicId || s.clinicId === effectiveClinicId)
     : state.sales
+
+  const filteredSuppliers = effectiveClinicId
+    ? state.suppliers.filter(s => !s.clinicId || s.clinicId === effectiveClinicId)
+    : state.suppliers
+
+  const filteredPurchaseOrders = effectiveClinicId
+    ? state.purchaseOrders.filter(p => !p.clinicId || p.clinicId === effectiveClinicId)
+    : state.purchaseOrders
 
   const pendingCount   = filteredInbox.filter(i => i.status === 'pending').length
   const role           = _currentRole
@@ -515,8 +615,11 @@ export function AppProvider({ children }) {
       groomingSessions:   filteredGroomingSessions,
       followUpSuggestions:filteredFollowUp,
       inventory:          filteredInventory,
+      inventoryActive:    filteredInventoryActive,
       services:           filteredServices,
       sales:              filteredSales,
+      suppliers:          filteredSuppliers,
+      purchaseOrders:     filteredPurchaseOrders,
       // Meta
       role, isCore, pendingCount, activeClinicId, currentClinic, effectiveClinicId,
       login, logout,
@@ -526,11 +629,13 @@ export function AppProvider({ children }) {
       addPet, updatePet, deletePet,
       addAppointment, updateAppointmentStatus, initiateAppointment,
       addMedicalRecord, addVaccineRecord, addDewormingRecord,
-      addInboxItem, markAsPaid, markWhatsAppSent,
+      addInboxItem, markAsPaid, markWhatsAppSent, addToInboxItem,
       startGroomingSession, stopGroomingSession,
       addFollowUpSuggestion, markFollowUpSent, updateFollowUpMessage,
       addInventoryItem, updateInventoryItem, deleteInventoryItem, adjustInventoryQuantity, importInventory, addSale,
       addService, updateService, deleteService,
+      addSupplier, updateSupplier, deleteSupplier,
+      addPurchaseOrder, updatePurchaseOrder, receivePurchaseOrder,
       addClinic, updateClinic, toggleClinicStatus, deleteClinic, setActiveClinic,
       clearAllData,
     }}>

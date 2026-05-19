@@ -3,27 +3,30 @@ import {
   LayoutDashboard, PawPrint, ClipboardList, Syringe, CalendarDays,
   Users, MessageCircle, Stethoscope, Scissors,
   Inbox, FilePlus, Calendar, LogOut, UserCog, Package,
-  ShieldCheck, ArrowLeft, Building2, ShoppingCart, DollarSign
+  ShieldCheck, ArrowLeft, Building2, ShoppingCart, DollarSign,
+  Truck
 } from 'lucide-react'
 import clsx from 'clsx'
 import { useApp } from '../../context/AppContext'
 
 // Core en modo clínica: nav completo de admin + gestión usuarios
 const coreClinicNav = [
-  { to: '/',            icon: LayoutDashboard, label: 'Dashboard'        },
-  { to: '/agenda',      icon: CalendarDays,    label: 'Agenda General'   },
-  { to: '/bandeja',     icon: Inbox,           label: 'Bandeja', badge: 'inbox' },
-  { to: '/servicios',   icon: Package,         label: 'Servicios'        },
-  { to: '/usuarios',    icon: UserCog,         label: 'Usuarios'         },
-  { to: '/mascotas',    icon: PawPrint,        label: 'Mascotas'         },
-  { to: '/historial',   icon: ClipboardList,   label: 'Historial Médico' },
-  { to: '/vacunas',     icon: Syringe,         label: 'Vacunas'          },
-  { to: '/citas',       icon: CalendarDays,    label: 'Citas'            },
-  { to: '/duenos',      icon: Users,           label: 'Dueños'           },
-  { to: '/inventario',  icon: Package,         label: 'Inventario'       },
-  { to: '/petshop',     icon: ShoppingCart,    label: 'Petshop'          },
-  { to: '/caja',        icon: DollarSign,      label: 'Caja'             },
-  { to: '/seguimiento', icon: MessageCircle,   label: 'Seguimiento IA'   },
+  { to: '/',              icon: LayoutDashboard, label: 'Dashboard'        },
+  { to: '/agenda',        icon: CalendarDays,    label: 'Agenda General'   },
+  { to: '/bandeja',       icon: Inbox,           label: 'Bandeja', badge: 'inbox' },
+  { to: '/servicios',     icon: Package,         label: 'Servicios'        },
+  { to: '/usuarios',      icon: UserCog,         label: 'Usuarios'         },
+  { to: '/mascotas',      icon: PawPrint,        label: 'Mascotas'         },
+  { to: '/historial',     icon: ClipboardList,   label: 'Historial Médico' },
+  { to: '/vacunas',       icon: Syringe,         label: 'Vacunas'          },
+  { to: '/citas',         icon: CalendarDays,    label: 'Citas'            },
+  { to: '/duenos',        icon: Users,           label: 'Dueños'           },
+  { to: '/inventario',    icon: Package,         label: 'Inventario'       },
+  { to: '/proveedores',   icon: Truck,           label: 'Proveedores'      },
+  { to: '/ordenes-compra',icon: ClipboardList,   label: 'Órdenes de Compra'},
+  { to: '/petshop',       icon: ShoppingCart,    label: 'Petshop'          },
+  { to: '/caja',          icon: DollarSign,      label: 'Caja'             },
+  { to: '/seguimiento',   icon: MessageCircle,   label: 'Seguimiento IA'   },
 ]
 
 // Core en modo global: solo panel global
@@ -33,19 +36,21 @@ const coreGlobalNav = [
 
 // Admin: sin gestión de usuarios
 const adminNav = [
-  { to: '/',            icon: LayoutDashboard, label: 'Dashboard'        },
-  { to: '/agenda',      icon: CalendarDays,    label: 'Agenda General'   },
-  { to: '/bandeja',     icon: Inbox,           label: 'Bandeja', badge: 'inbox' },
-  { to: '/servicios',   icon: Package,         label: 'Servicios'        },
-  { to: '/mascotas',    icon: PawPrint,        label: 'Mascotas'         },
-  { to: '/historial',   icon: ClipboardList,   label: 'Historial Médico' },
-  { to: '/vacunas',     icon: Syringe,         label: 'Vacunas'          },
-  { to: '/citas',       icon: CalendarDays,    label: 'Citas'            },
-  { to: '/duenos',      icon: Users,           label: 'Dueños'           },
-  { to: '/inventario',  icon: Package,         label: 'Inventario'       },
-  { to: '/petshop',     icon: ShoppingCart,    label: 'Petshop'          },
-  { to: '/caja',        icon: DollarSign,      label: 'Caja'             },
-  { to: '/seguimiento', icon: MessageCircle,   label: 'Seguimiento IA'   },
+  { to: '/',              icon: LayoutDashboard, label: 'Dashboard'        },
+  { to: '/agenda',        icon: CalendarDays,    label: 'Agenda General'   },
+  { to: '/bandeja',       icon: Inbox,           label: 'Bandeja', badge: 'inbox' },
+  { to: '/servicios',     icon: Package,         label: 'Servicios'        },
+  { to: '/mascotas',      icon: PawPrint,        label: 'Mascotas'         },
+  { to: '/historial',     icon: ClipboardList,   label: 'Historial Médico' },
+  { to: '/vacunas',       icon: Syringe,         label: 'Vacunas'          },
+  { to: '/citas',         icon: CalendarDays,    label: 'Citas'            },
+  { to: '/duenos',        icon: Users,           label: 'Dueños'           },
+  { to: '/inventario',    icon: Package,         label: 'Inventario'       },
+  { to: '/proveedores',   icon: Truck,           label: 'Proveedores'      },
+  { to: '/ordenes-compra',icon: ClipboardList,   label: 'Órdenes de Compra'},
+  { to: '/petshop',       icon: ShoppingCart,    label: 'Petshop'          },
+  { to: '/caja',          icon: DollarSign,      label: 'Caja'             },
+  { to: '/seguimiento',   icon: MessageCircle,   label: 'Seguimiento IA'   },
 ]
 
 const vetNav = [
